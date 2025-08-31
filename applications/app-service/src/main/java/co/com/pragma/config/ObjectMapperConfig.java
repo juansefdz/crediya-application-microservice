@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.config;
+package co.com.pragma.config;
 
 import org.reactivecommons.utils.ObjectMapper;
 import org.reactivecommons.utils.ObjectMapperImp;

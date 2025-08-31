@@ -1,6 +1,6 @@
-package co.com.pragma--type&amp;#61;reactive.r2dbc;
+package co.com.pragma.r2dbc;
 
-import co.com.pragma--type&amp;#61;reactive.r2dbc.helper.ReactiveAdapterOperations;
+import co.com.pragma.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
 

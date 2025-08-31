@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.usecase.loanaplication;
+package co.com.pragma.usecase.loanaplication;
 
 import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor

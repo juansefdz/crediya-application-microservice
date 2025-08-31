@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.r2dbc.helper;
+package co.com.pragma.r2dbc.helper;
 
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.data.domain.Example;

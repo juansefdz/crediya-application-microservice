@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.r2dbc;
+package co.com.pragma.r2dbc;
 
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;

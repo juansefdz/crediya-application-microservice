@@ -1,4 +1,4 @@
-package co.com.pragma--type&#61;reactive;
+package co.com.pragma;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
