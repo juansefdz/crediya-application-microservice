@@ -25,33 +25,37 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class RouterConfig {
 
     @Bean
-    @RouterOperations({
+    @RouterOperations(
             @RouterOperation(
                     path = "/api/v1/solicitud",
                     produces = { MediaType.APPLICATION_JSON_VALUE },
                     method = RequestMethod.POST,
                     beanClass = Handler.class,
-                    beanMethod = "registrarSolicitudCredito",
+                    // ¡CORRECCIÓN CLAVE! El método en tu Handler se llama "createLoanApplication"
+                    beanMethod = "createLoanApplication",
                     operation = @Operation(
-                            operationId = "registrarSolicitudCredito",
-                            summary = "Registrar un nuevo crédito",
-                            description = "Crea la solicitud de crédito",
-                            tags = { "Créditos" },
+                            operationId = "createLoanApplication",
+                            summary = "Crear una nueva solicitud de préstamo",
+                            description = "Crea una nueva solicitud de préstamo en el sistema.",
+                            tags = { "Solicitudes de Préstamo" },
                             requestBody = @RequestBody(
                                     required = true,
-                                    description = "Datos de la solicitud de crédito",
+                                    description = "Datos para la nueva solicitud de préstamo",
                                     content = @Content(schema = @Schema(implementation = LoanApplicationRequestDTO.class))
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "201", description = "Solicitud creada",
-                                            content = @Content(schema = @Schema(implementation = LoanApplicationResponseDTO.class))),
-                                    @ApiResponse(responseCode = "400", description = "Datos inválidos"),
-                                    @ApiResponse(responseCode = "500", description = "Error del servidor")
+                                    @ApiResponse(
+                                            responseCode = "201",
+                                            description = "Solicitud creada exitosamente",
+                                            content = @Content(schema = @Schema(implementation = LoanApplicationResponseDTO.class))
+                                    ),
+                                    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
                     )
             )
-    })
-    public RouterFunction<ServerResponse> registrarSolicitudCreditoRoute(Handler handler) {
+    )
+    public RouterFunction<ServerResponse> loanApplicationRoute(Handler handler) {
         return route(POST("/api/v1/solicitud").and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication);
     }
 }
