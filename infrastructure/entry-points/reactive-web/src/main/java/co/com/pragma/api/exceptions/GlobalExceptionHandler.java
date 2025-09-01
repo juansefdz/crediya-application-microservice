@@ -1,7 +1,9 @@
 package co.com.pragma.api.exceptions;
 
 import co.com.pragma.api.dto.ErrorResponseDTO;
-import co.com.pragma.model.customExceptions.*;
+import co.com.pragma.model.customExceptions.BusinessException;
+import co.com.pragma.model.customExceptions.InvalidLoanApplicationException;
+import co.com.pragma.model.customExceptions.LoanTypeNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -14,6 +16,7 @@ import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
@@ -33,21 +36,23 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
     private final ObjectMapper objectMapper;
     private final Map<Class<? extends Throwable>, Function<Throwable, ErrorResponseDTO>> exceptionHandlers = new HashMap<>();
+    private final Map<Class<? extends BusinessException>, HttpStatus> statusMap = new HashMap<>();
 
     @PostConstruct
     public void init() {
-        // Registro de excepciones de negocio personalizadas
-
-        // Registro de excepciones del framework
+        exceptionHandlers.put(BusinessException.class, this::handleBusinessException);
         exceptionHandlers.put(ServerWebInputException.class, this::handleServerWebInputException);
+
+        statusMap.put(LoanTypeNotFoundException.class, HttpStatus.NOT_FOUND);
+        statusMap.put(InvalidLoanApplicationException.class, HttpStatus.BAD_REQUEST);
     }
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         log.error("GlobalExceptionHandler caught an error. Exception Type: {}", ex.getClass().getName(), ex);
 
-        ErrorResponseDTO errorResponse = exceptionHandlers.getOrDefault(ex.getClass(), this::defaultErrorHandler).apply(ex);
-
+        Function<Throwable, ErrorResponseDTO> handler = findHandler(ex.getClass());
+        ErrorResponseDTO errorResponse = handler.apply(ex);
         errorResponse.setPath(exchange.getRequest().getPath().value());
 
         exchange.getResponse().setStatusCode(HttpStatus.valueOf(errorResponse.getStatus()));
@@ -64,39 +69,49 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         }
     }
 
-    private ErrorResponseDTO handleServerWebInputException(Throwable ex) {
-        ServerWebInputException webInputEx = (ServerWebInputException) ex;
-        String message;
-
-        Throwable cause = webInputEx.getRootCause();
-        if (cause instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ifx) {
-            String fieldName = ifx.getPath().isEmpty() ? "unknown" : ifx.getPath().get(0).getFieldName();
-            message = String.format("El valor '%s' no es válido para el campo '%s'.", ifx.getValue(), fieldName);
+    private Function<Throwable, ErrorResponseDTO> findHandler(Class<?> exceptionClass) {
+        if (exceptionClass == null) {
+            return this::defaultErrorHandler;
         }
-
-        else if (webInputEx.getCause() instanceof WebExchangeBindException bindEx) {
-            message = bindEx.getAllErrors().stream()
-                    .map(error -> {
-                        String field = (error instanceof org.springframework.validation.FieldError fieldError)
-                                ? fieldError.getField() : error.getObjectName();
-                        return field + ": " + error.getDefaultMessage();
-                    })
-                    .collect(Collectors.joining(", "));
+        Function<Throwable, ErrorResponseDTO> handler = exceptionHandlers.get(exceptionClass);
+        if (handler != null) {
+            return handler;
         }
-        else {
-            message = "La petición tiene un formato inválido. Por favor, revise los datos enviados.";
-        }
-
-        return buildErrorResponse(message, HttpStatus.BAD_REQUEST, "Bad Request", "BAD_REQUEST");
+        return findHandler(exceptionClass.getSuperclass());
     }
 
-    private ErrorResponseDTO buildErrorResponse(Throwable ex, HttpStatus status, String errorType) {
+    private ErrorResponseDTO handleBusinessException(Throwable ex) {
         BusinessException bex = (BusinessException) ex;
+        HttpStatus status = statusMap.getOrDefault(bex.getClass(), HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(bex, status);
+    }
+
+    private ErrorResponseDTO handleServerWebInputException(Throwable ex) {
+        ServerWebInputException webInputEx = (ServerWebInputException) ex;
+        String message = "La petición tiene un formato inválido.";
+        Map<String, String> errors = null;
+
+        if (webInputEx.getCause() instanceof WebExchangeBindException bindEx) {
+            message = "Error de validación. Por favor, revise los campos.";
+            errors = bindEx.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            FieldError::getField,
+                            fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Valor inválido"
+                    ));
+        }
+
+        ErrorResponseDTO response = buildErrorResponse(message, HttpStatus.BAD_REQUEST, "Bad Request", "BAD_REQUEST");
+        // Asumiendo que ErrorResponseDTO tiene un campo para validationErrors
+        // response.setValidationErrors(errors);
+        return response;
+    }
+
+    private ErrorResponseDTO buildErrorResponse(BusinessException bex, HttpStatus status) {
         return ErrorResponseDTO.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
                 .code(bex.getCode())
-                .error(errorType)
+                .error(status.getReasonPhrase())
                 .message(bex.getMessage())
                 .build();
     }
@@ -112,6 +127,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
     }
 
     private ErrorResponseDTO defaultErrorHandler(Throwable ex) {
+        log.error("Unhandled exception occurred: ", ex);
         return buildErrorResponse("Ocurrió un error inesperado.", HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "INTERNAL_ERROR");
     }
 }

@@ -10,6 +10,5 @@ import java.awt.print.Pageable;
 public interface LoanApplicationRepository {
     Mono<LoanApplication> save(LoanApplication solicitud);
 
-    Flux<LoanApplication> findApplications(Pageable pageable);
 }
 
