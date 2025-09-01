@@ -13,6 +13,11 @@ dependencies {
     implementation 'io.r2dbc:r2dbc-pool:1.0.1.RELEASE'
     implementation project(':r2dbc-postgresql')
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Dependencia principal de Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+    runtimeOnly 'com.mysql:mysql-connector-j'
     // Utilidades
     implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
 
