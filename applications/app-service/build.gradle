@@ -2,18 +2,19 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
+    // Módulos de tu aplicación
     implementation project(':reactive-web')
     implementation project(':model')
     implementation project(':usecase')
 
-    // R2DBC MySQL (autoconfiguración de Spring Data R2DBC)
+    // R2DBC MySQL (el starter ya incluye todo lo necesario)
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     implementation 'io.asyncer:r2dbc-mysql:1.1.3'
     implementation 'io.r2dbc:r2dbc-pool:1.0.1.RELEASE'
-
+    implementation project(':r2dbc-postgresql')
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     // Utilidades
     implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
-    implementation 'org.springframework.boot:spring-boot-starter'
 
     // Devtools solo en desarrollo
     developmentOnly 'org.springframework.boot:spring-boot-devtools'

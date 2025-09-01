@@ -1,21 +1,20 @@
 package co.com.pragma.model.loantype;
-import lombok.Builder;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.*;
 //import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-//@NoArgsConstructor
-@AllArgsConstructor
+import java.math.BigDecimal;
+
+@Data
 @Builder(toBuilder = true)
 public class LoanType {
 
-    private Long id;
+    private String id;
     private String nombre;
-    private Long montoMinimo;
-    private Long montoMaximo;
+
+
+    private BigDecimal montoMinimo;
+    private BigDecimal montoMaximo;
+
     private Double tasaInteres;
     private Boolean validacionAutomatica;
 }

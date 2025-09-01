@@ -1,22 +1,18 @@
 package co.com.pragma.model.loanapplication;
-import lombok.Builder;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import co.com.pragma.model.LoanApplicationStatus;
+import lombok.*;
 //import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-//@NoArgsConstructor
-@AllArgsConstructor
+import java.math.BigDecimal;
+
 @Builder(toBuilder = true)
+@Getter
 public class LoanApplication {
-
-    private Long id;
-    private String documentoCliente;
-    private String email;
-    private Long monto;
+    private String id;
+    private BigDecimal monto;
     private Integer plazo;
-    private Long estadoId;
-    private Long tipoPrestamoId;
+    private String usuarioId;
+    private String prestamoId;
+    private Integer estadoId;
+    private LoanApplicationStatus status;
 }

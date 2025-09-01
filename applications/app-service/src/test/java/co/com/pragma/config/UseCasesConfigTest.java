@@ -1,4 +1,6 @@
-package co.com.pragma--type&#61;reactive.config;
+package co.com.pragma.config
+
+--type&#61;reactive.config;
 
 import co.com.pragma.config.UseCasesConfig;
 import org.junit.jupiter.api.Test;
