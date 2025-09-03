@@ -17,4 +17,7 @@ public class LoanApplication {
     private String usuarioId;
     private String prestamoId;
     private LoanApplicationStatus status;
+
+    public void setPrestamoId(String tipoInvalido) {
+    }
 }

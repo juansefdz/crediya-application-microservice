@@ -39,7 +39,7 @@ public class LoanApplicationData implements Persistable<String> {
         private LoanApplicationStatus status;
 
         @Transient
-        private boolean newEntity = true; // ← clave para INSERT
+        private boolean newEntity = true;
 
         @Override public String getId() { return id; }
         @Override public boolean isNew() { return newEntity; }
