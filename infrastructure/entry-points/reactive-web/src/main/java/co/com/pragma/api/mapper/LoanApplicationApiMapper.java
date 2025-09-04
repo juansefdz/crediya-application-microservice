@@ -2,6 +2,7 @@ package co.com.pragma.api.mapper;
 
 import co.com.pragma.api.dto.LoanApplicationRequestDTO;
 import co.com.pragma.api.dto.LoanApplicationResponseDTO;
+import co.com.pragma.api.dto.LoanApplicationSummaryDTO;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,4 +17,8 @@ public interface LoanApplicationApiMapper {
     LoanApplication toDomain(LoanApplicationRequestDTO dto);
 
     LoanApplicationResponseDTO toDTO(LoanApplication domain);
+
+    //para el listado
+    @Mapping(source = "status", target = "estadoSolicitud")
+    LoanApplicationSummaryDTO toSummaryDTO(LoanApplication domain);
 }

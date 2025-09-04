@@ -5,10 +5,10 @@ import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.dialect.DialectResolver;
 
 import java.util.List;
 
@@ -28,12 +28,14 @@ public class R2dbcConfig {
     }
 
     @ReadingConverter
+
     public static class LoanApplicationStatusReadConverter
-            implements Converter<Integer, LoanApplicationStatus> {
+            implements Converter<Long, LoanApplicationStatus> {
         @Override
-        public LoanApplicationStatus convert(Integer source) {
+        public LoanApplicationStatus convert(Long source) {
+            int sourceId = source.intValue();
             for (LoanApplicationStatus s : LoanApplicationStatus.values()) {
-                if (s.getId() == source) return s;
+                if (s.getId() == sourceId) return s;
             }
             throw new IllegalArgumentException("ID de estado inválido: " + source);
         }

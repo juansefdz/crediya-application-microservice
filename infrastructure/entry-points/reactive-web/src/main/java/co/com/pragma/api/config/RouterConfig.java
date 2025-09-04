@@ -3,7 +3,11 @@ package co.com.pragma.api.config;
 import co.com.pragma.api.Handler;
 import co.com.pragma.api.dto.LoanApplicationRequestDTO;
 import co.com.pragma.api.dto.LoanApplicationResponseDTO;
+import co.com.pragma.api.dto.LoanApplicationSummaryDTO;
+import co.com.pragma.api.dto.PageResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -17,45 +21,55 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
-import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
 public class RouterConfig {
 
+    private static final String API_PATH = "/api/v1/solicitudes";
+
     @Bean
-    @RouterOperations(
+    @RouterOperations({
+
             @RouterOperation(
-                    path = "/api/v1/solicitud",
-                    produces = { MediaType.APPLICATION_JSON_VALUE },
+                    path = API_PATH,
                     method = RequestMethod.POST,
                     beanClass = Handler.class,
-                    // ¡CORRECCIÓN CLAVE! El método en tu Handler se llama "createLoanApplication"
                     beanMethod = "createLoanApplication",
+                    operation = @Operation( /* ... Tu operación POST ... */ )
+            ),
+
+            @RouterOperation(
+                    path = API_PATH,
+                    produces = { MediaType.APPLICATION_JSON_VALUE },
+                    method = RequestMethod.GET,
+                    beanClass = Handler.class,
+                    beanMethod = "obtenerSolicitudes",
                     operation = @Operation(
-                            operationId = "createLoanApplication",
-                            summary = "Crear una nueva solicitud de préstamo",
-                            description = "Crea una nueva solicitud de préstamo en el sistema.",
+                            operationId = "obtenerSolicitudes",
+                            summary = "Obtener listado paginado de solicitudes para revisión",
                             tags = { "Solicitudes de Préstamo" },
-                            requestBody = @RequestBody(
-                                    required = true,
-                                    description = "Datos para la nueva solicitud de préstamo",
-                                    content = @Content(schema = @Schema(implementation = LoanApplicationRequestDTO.class))
-                            ),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.QUERY, name = "page", description = "Número de página (inicia en 0)", schema = @Schema(type = "integer", defaultValue = "0")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "size", description = "Tamaño de la página", schema = @Schema(type = "integer", defaultValue = "10")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "sortBy", description = "Campo para ordenar", schema = @Schema(type = "string", defaultValue = "monto")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "sortOrder", description = "Orden (ASC o DESC)", schema = @Schema(type = "string", defaultValue = "ASC"))
+                            },
                             responses = {
                                     @ApiResponse(
-                                            responseCode = "201",
-                                            description = "Solicitud creada exitosamente",
-                                            content = @Content(schema = @Schema(implementation = LoanApplicationResponseDTO.class))
+                                            responseCode = "200",
+                                            description = "Operación exitosa",
+                                            content = @Content(schema = @Schema(implementation = PageResponseDTO.class)) // Nota: Aquí referenciamos el DTO de paginación
                                     ),
-                                    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                                    @ApiResponse(responseCode = "401", description = "No autorizado"),
+                                    @ApiResponse(responseCode = "403", description = "Acceso prohibido")
                             }
                     )
             )
-    )
-    public RouterFunction<ServerResponse> loanApplicationRoute(Handler handler) {
-        return route(POST("/api/v1/solicitud").and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication);
+    })
+    public RouterFunction<ServerResponse> loanApplicationRoutes(Handler handler) {
+        return route(POST(API_PATH).and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication)
+                .andRoute(GET(API_PATH), handler::obtenerSolicitudes);
     }
 }
