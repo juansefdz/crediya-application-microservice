@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum LoanApplicationStatus {
     PENDIENTE_REVISION(1),
     APROBADA(2),
-    RECHAZADA(3);
+    RECHAZADA(3),
+    REVISION_MANUAL(4);
 
     private final int id;
     public int getId() { return id; }
