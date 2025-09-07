@@ -28,8 +28,6 @@ public class ListApplicationsUseCase {
         List<Integer> statusIds = ESTADOS_REVISION.stream()
                 .map(LoanApplicationStatus::getId)
                 .toList();
-        // ------------------------------------
-
 
         Mono<Long> totalElementsMono = loanApplicationRepository.countByStatusIn(statusIds);
         Mono<List<LoanApplication>> contentMono = loanApplicationRepository
