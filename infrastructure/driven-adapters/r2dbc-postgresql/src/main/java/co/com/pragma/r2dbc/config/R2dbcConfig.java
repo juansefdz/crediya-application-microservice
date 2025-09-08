@@ -28,16 +28,13 @@ public class R2dbcConfig {
     }
 
     @ReadingConverter
-
+    // ✅ CORRECCIÓN: Cambia el tipo de entrada de Integer a Long
     public static class LoanApplicationStatusReadConverter
             implements Converter<Long, LoanApplicationStatus> {
         @Override
         public LoanApplicationStatus convert(Long source) {
-            int sourceId = source.intValue();
-            for (LoanApplicationStatus s : LoanApplicationStatus.values()) {
-                if (s.getId() == sourceId) return s;
-            }
-            throw new IllegalArgumentException("ID de estado inválido: " + source);
+            // Convierte el Long a int para usar tu método fromId
+            return LoanApplicationStatus.fromId(source.intValue());
         }
     }
 

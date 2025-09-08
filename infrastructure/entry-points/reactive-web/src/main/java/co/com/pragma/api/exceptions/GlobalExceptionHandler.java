@@ -1,9 +1,7 @@
 package co.com.pragma.api.exceptions;
 
 import co.com.pragma.api.dto.ErrorResponseDTO;
-import co.com.pragma.model.customExceptions.BusinessException;
-import co.com.pragma.model.customExceptions.InvalidLoanApplicationException;
-import co.com.pragma.model.customExceptions.LoanTypeNotFoundException;
+import co.com.pragma.model.customExceptions.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -45,6 +43,9 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
         statusMap.put(LoanTypeNotFoundException.class, HttpStatus.NOT_FOUND);
         statusMap.put(InvalidLoanApplicationException.class, HttpStatus.BAD_REQUEST);
+        statusMap.put(LoanApplicationNotFoundException.class, HttpStatus.NOT_FOUND);
+        statusMap.put(InvalidStatusException.class, HttpStatus.BAD_REQUEST);
+        statusMap.put(InvalidPaginationException.class, HttpStatus.BAD_REQUEST);
     }
 
     @Override

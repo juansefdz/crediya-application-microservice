@@ -2,9 +2,11 @@ package co.com.pragma.r2dbc.adapter;
 
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
+import co.com.pragma.r2dbc.data.LoanApplicationData;
 import co.com.pragma.r2dbc.mapper.LoanApplicationPersistenceMapper;
 import co.com.pragma.r2dbc.repository.LoanApplicationDataRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Repository
+@Slf4j
 @RequiredArgsConstructor
 public class LoanApplicationRepositoryAdapter implements LoanApplicationRepository {
 
@@ -40,5 +43,22 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
     @Override
     public Mono<Long> countByStatusIn(List<Integer> statusIds) {
         return dataRepository.countByStatusIn(statusIds);
+    }
+
+    @Override
+    public Mono<LoanApplication> findById(String id) {
+        return dataRepository.findById(id)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Mono<LoanApplication> update(LoanApplication solicitud) {
+        LoanApplicationData dataEntity = mapper.toData(solicitud);
+
+        dataEntity.markSaved();
+        log.info("ADAPTER: Actualizando en BD: {}", dataEntity);
+
+        return dataRepository.save(dataEntity)
+                .map(mapper::toDomain);
     }
 }

@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.api;
+package co.com.pragma.api;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

@@ -2,6 +2,7 @@ package co.com.pragma.usecase.listapplications;
 
 import co.com.pragma.model.LoanApplicationStatus;
 import co.com.pragma.model.PageResponse;
+import co.com.pragma.model.customExceptions.InvalidPaginationException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,10 @@ public class ListApplicationsUseCase {
 
     public Mono<PageResponse<LoanApplication>> execute(int page, int size, String sortBy, String sortOrder) {
         log.info("CU: Obteniendo solicitudes para revisión. Página: {}, Tamaño: {}", page, size);
+
+        if (page < 0 || size <= 0) {
+            return Mono.error(new InvalidPaginationException("Los parámetros de página y tamaño deben ser positivos."));
+        }
 
         List<Integer> statusIds = ESTADOS_REVISION.stream()
                 .map(LoanApplicationStatus::getId)
