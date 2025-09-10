@@ -13,7 +13,7 @@ public class LoanApplication {
     private BigDecimal monto;
     private Integer plazo;
     private String email;
-
+    private String nombreCliente;
     private String usuarioId;
     private String prestamoId;
     private LoanApplicationStatus status;

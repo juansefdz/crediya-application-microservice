@@ -46,7 +46,7 @@ public class LoanApplicationUseCase {
             if (app.getPrestamoId() == null || app.getPrestamoId().isBlank()) {
                 return Mono.error(new InvalidLoanApplicationException("El tipo de préstamo es obligatorio."));
             }
-            // ⬇️ AQUÍ EL FIX: validar usuarioId, no id
+
             if (app.getUsuarioId() == null || app.getUsuarioId().isBlank()) {
                 return Mono.error(new InvalidLoanApplicationException("La identificación del usuario es obligatoria."));
             }

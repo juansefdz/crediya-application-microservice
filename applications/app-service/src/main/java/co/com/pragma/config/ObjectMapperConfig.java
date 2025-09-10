@@ -1,7 +1,7 @@
 package co.com.pragma.config;
 
-import org.reactivecommons.utils.ObjectMapper;
-import org.reactivecommons.utils.ObjectMapperImp;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,8 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class ObjectMapperConfig {
 
     @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapperImp();
+    public Jackson2ObjectMapperBuilderCustomizer addCustomModules() {
+        return builder -> builder.modules(new JavaTimeModule());
     }
-
 }
