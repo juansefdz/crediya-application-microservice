@@ -19,8 +19,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // R2DBC MySQL
-    implementation 'io.asyncer:r2dbc-mysql:1.1.3'
-    implementation 'io.r2dbc:r2dbc-pool:1.0.1.RELEASE'
+    implementation 'io.asyncer:r2dbc-mysql:1.4.1'
+    implementation 'io.r2dbc:r2dbc-pool:1.0.2.RELEASE'
 
     // Flyway (Base de Datos)
     implementation 'org.flywaydb:flyway-core'

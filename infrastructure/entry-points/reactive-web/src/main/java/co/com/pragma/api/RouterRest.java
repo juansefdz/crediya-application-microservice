@@ -16,7 +16,8 @@ public class RouterRest {
     public RouterFunction<ServerResponse> routes(Handler handler) {
         return RouterFunctions
                 .route(POST("/loan-application").and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication)
-                .andRoute(GET("/api/v1/solicitudes"), handler::obtenerSolicitudes)
+                .andRoute(GET("/api/v1/solicitudes/in-review"), handler::obtenerSolicitudes)
+                .andRoute(GET("/api/v1/solicitudes"), handler::listAllApplications)
                 .andRoute(PUT("/api/v1/solicitud/{id}"), handler::updateApplicationStatus);
     }
 }

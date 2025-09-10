@@ -14,5 +14,8 @@ public interface LoanApplicationRepository {
     Mono<LoanApplication> update(LoanApplication solicitud);
     Flux<LoanApplication> findByStatusIn(List<Integer> statusIds, int page, int size, String sortBy, String sortOrder);
     Mono<Long> countByStatusIn(List<Integer> statusIds);
+
+    Mono<Long> countAll();
+    Flux<LoanApplication> findAll(int page, int size, String sortBy, String sortOrder);
 }
 

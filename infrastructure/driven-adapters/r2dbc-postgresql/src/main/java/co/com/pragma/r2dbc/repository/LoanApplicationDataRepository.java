@@ -15,6 +15,8 @@ public interface LoanApplicationDataRepository extends ReactiveCrudRepository<Lo
 
     Flux<LoanApplicationData> findByStatusIn(List<Integer> statusIds, Pageable pageable);
 
+    Mono<Long> count();
+    Flux<LoanApplicationData> findAllBy(Pageable pageable);
 
 
 }

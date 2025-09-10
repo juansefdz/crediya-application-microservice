@@ -3,14 +3,14 @@ dependencies {
 
     // Spring / R2DBC
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
-    implementation 'io.asyncer:r2dbc-mysql:1.1.3'
-    implementation 'io.r2dbc:r2dbc-pool:1.0.1.RELEASE'
+    implementation 'io.asyncer:r2dbc-mysql:1.4.1'
+    implementation 'io.r2dbc:r2dbc-pool:1.0.2.RELEASE'
 
-    // MapStruct + Lombok (para que compile bien con @Builder)
-    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-    compileOnly 'org.projectlombok:lombok:1.18.32'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+    // MapStruct + Lombok (para que implementation bien con @Builder)
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
     // Reactive Commons (si lo usas)
