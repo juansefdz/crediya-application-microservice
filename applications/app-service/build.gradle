@@ -37,4 +37,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'com.tngtech.archunit:archunit:1.4.1'
+
+    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
 }
