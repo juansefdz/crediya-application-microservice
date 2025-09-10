@@ -32,7 +32,6 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
 
     @Override
     public Flux<LoanApplication> findByStatusIn(List<Integer> statusIds, int page, int size, String sortBy, String sortOrder) {
-
         Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
@@ -54,11 +53,21 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
     @Override
     public Mono<LoanApplication> update(LoanApplication solicitud) {
         LoanApplicationData dataEntity = mapper.toData(solicitud);
-
         dataEntity.markSaved();
         log.info("ADAPTER: Actualizando en BD: {}", dataEntity);
-
         return dataRepository.save(dataEntity)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public Flux<LoanApplication> findAll(int page, int size, String sortBy, String sortOrder) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return dataRepository.findAllBy(pageable).map(mapper::toDomain);
+    }
+
+    @Override
+    public Mono<Long> countAll() {
+        return dataRepository.count();
     }
 }

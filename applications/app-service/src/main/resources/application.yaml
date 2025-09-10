@@ -14,12 +14,10 @@ spring:
     add-properties: false
   jackson:
     time-zone: "America/Bogota"
-
 security:
   jwt:
-    secret: Vna79qB2rPz6tXhE9fWcK5sJmG3dD8vA
+    secret: "Vna79qB2rPz6tXhE9fWcK5sJmG3dD8vA"
     expiration-seconds: 86400
-
 management:
   endpoints:
     web:
@@ -33,7 +31,5 @@ cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
 adapter:
   sqs:
-    region: ${AWS_REGION}
-    queue-url: ${SQS_QUEUE_URL}
-
-
+    region: "${AWS_REGION}"
+    queue-url: "${SQS_QUEUE_URL}"

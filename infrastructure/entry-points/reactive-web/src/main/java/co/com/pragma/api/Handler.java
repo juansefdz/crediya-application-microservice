@@ -7,6 +7,7 @@ import co.com.pragma.api.dto.PageResponseDTO;
 import co.com.pragma.api.dto.UpdateStatusRequestDTO;
 import co.com.pragma.api.mapper.LoanApplicationApiMapper;
 import co.com.pragma.model.customExceptions.BusinessException;
+import co.com.pragma.usecase.listapplications.ListAllApplicationsUseCase;
 import co.com.pragma.usecase.listapplications.ListApplicationsUseCase;
 import co.com.pragma.usecase.loanaplication.LoanApplicationUseCase;
 import co.com.pragma.usecase.updateapplicationstatus.UpdateApplicationStatusUseCase;
@@ -29,6 +30,7 @@ public class Handler {
     private final LoanApplicationApiMapper apiMapper;
     private final ListApplicationsUseCase listApplicationsUseCase;
     private final UpdateApplicationStatusUseCase updateApplicationStatusUseCase;
+    private final ListAllApplicationsUseCase listAllApplicationsUseCase;
 
     public Mono<ServerResponse> createLoanApplication(ServerRequest request) {
         return request.bodyToMono(LoanApplicationRequestDTO.class)
@@ -86,6 +88,29 @@ public class Handler {
                 .onErrorResume(Exception.class, e -> {
                     log.error("HANDLER: Error inesperado no controlado:", e);
                     return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue("Error inesperado.");
+                });
+    }
+
+    public Mono<ServerResponse> listAllApplications(ServerRequest request) {
+        int page = request.queryParam("page").map(Integer::parseInt).orElse(0);
+        int size = request.queryParam("size").map(Integer::parseInt).orElse(10);
+        String sortBy = request.queryParam("sortBy").orElse("created_at");
+        String sortOrder = request.queryParam("sortOrder").orElse("DESC");
+
+        return listAllApplicationsUseCase.execute(page, size, sortBy, sortOrder)
+                .flatMap(pageResponse -> {
+                    List<LoanApplicationSummaryDTO> dtoList = pageResponse.getContent().stream()
+                            .map(apiMapper::toSummaryDTO)
+                            .toList();
+
+                    PageResponseDTO<LoanApplicationSummaryDTO> responseDto = PageResponseDTO.<LoanApplicationSummaryDTO>builder()
+                            .content(dtoList)
+                            .currentPage(pageResponse.getCurrentPage())
+                            .totalElements(pageResponse.getTotalElements())
+                            .totalPages(pageResponse.getTotalPages())
+                            .build();
+
+                    return ServerResponse.ok().bodyValue(responseDto);
                 });
     }
 }

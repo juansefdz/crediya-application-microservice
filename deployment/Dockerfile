@@ -42,7 +42,7 @@ EXPOSE 8081
 # Copiamos ÚNICAMENTE el JAR compilado desde la etapa "build".
 # La ruta 'applications/app-service/' es estándar para el scaffold de Bancolombia.
 # Si tu módulo principal tiene otro nombre, ajústalo aquí.
-COPY --from=build /app/applications/app-service/build/libs/*.jar app.jar
+COPY --from=build /app/applications/app-service/build/libs/*.jar CrediyaApplicationMicroservice.jar
 
 # Comando para ejecutar la aplicación cuando se inicie el contenedor.
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "CrediyaApplicationMicroservice.jar"]

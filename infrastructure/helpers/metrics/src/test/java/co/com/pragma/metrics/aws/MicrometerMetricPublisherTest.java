@@ -1,4 +1,4 @@
-package co.com.pragma--type&amp;#61;reactive.metrics.aws;
+package co.com.pragma.metrics.aws;
 
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
@@ -15,7 +15,7 @@ class MicrometerMetricPublisherTest {
             .builder(LoggingRegistryConfig.DEFAULT)
             .build();
 
-        MicrometerMetricPublisher micrometerMetricPublisher = new MicrometerMetricPublisher(loggingMeterRegistry);
+        co.com.pragma.metrics.aws.MicrometerMetricPublisher micrometerMetricPublisher = new co.com.pragma.metrics.aws.MicrometerMetricPublisher(loggingMeterRegistry);
 
         micrometerMetricPublisher.publish(EmptyMetricCollection.create());
         micrometerMetricPublisher.close();
