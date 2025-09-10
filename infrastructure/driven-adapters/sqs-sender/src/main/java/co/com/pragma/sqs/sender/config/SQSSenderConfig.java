@@ -22,12 +22,16 @@ public class SQSSenderConfig {
 
     @Bean
     public SqsAsyncClient configSqs(SQSSenderProperties properties, MetricPublisher publisher) {
-        return SqsAsyncClient.builder()
-                .endpointOverride(resolveEndpoint(properties))
+        var builder = SqsAsyncClient.builder()
                 .region(Region.of(properties.region()))
                 .overrideConfiguration(o -> o.addMetricPublisher(publisher))
-                .credentialsProvider(getProviderChain())
-                .build();
+                .credentialsProvider(getProviderChain());
+
+        if (properties.endpoint() != null && !properties.endpoint().isBlank()) {
+            builder.endpointOverride(URI.create(properties.endpoint()));
+        }
+
+        return builder.build();
     }
 
     private AwsCredentialsProviderChain getProviderChain() {

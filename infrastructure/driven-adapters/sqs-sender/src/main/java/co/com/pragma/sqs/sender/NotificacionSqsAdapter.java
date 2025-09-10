@@ -12,6 +12,8 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
+import java.math.BigDecimal;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -19,7 +21,7 @@ public class NotificacionSqsAdapter implements NotificationRepository {
 
     private final SQSSenderProperties properties;
     private final SqsAsyncClient client;
-    private final ObjectMapper objectMapper; 
+    private final ObjectMapper objectMapper;
 
     @Override
     public Mono<Void> sendNotificationCreditReport(LoanApplication solicitud) {
@@ -28,9 +30,12 @@ public class NotificacionSqsAdapter implements NotificationRepository {
                             solicitud.getUsuarioId(),
                             solicitud.getEmail(),
                             solicitud.getStatus().name(),
-                            solicitud.getId()
+                            solicitud.getId(),
+                            solicitud.getPlazo(),
+                            solicitud.getMonto(),
+                            solicitud.getNombreCliente()
                     );
-                    return objectMapper.writeValueAsString(messageDto); // 👈 serialize
+                    return objectMapper.writeValueAsString(messageDto);
                 })
                 .flatMap(this::send)
                 .then();
@@ -51,5 +56,5 @@ public class NotificacionSqsAdapter implements NotificationRepository {
                 .build();
     }
 
-    private record NotificacionMessageDTO(String usuarioId, String email, String estado, String solicitudId) {}
+    private record NotificacionMessageDTO(String usuarioId, String email, String estado, String solicitudId, Integer plazo, BigDecimal monto, String nombreCliente) {}
 }
