@@ -1,23 +1,21 @@
 server:
   port: 8080
+
 spring:
   application:
     name: "CrediyaApplicationMicroservice"
-  r2dbc:
-    url: "r2dbc:pool:mysql://usuario:contrasena@localhost:3307/crediya_db?sslMode=DISABLED&serverZoneId=America/Bogota&allowPublicKeyRetrieval=true"
-  flyway:
-    enabled: true
-    url: "jdbc:mysql://localhost:3307/crediya_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Bogota"
-    user: "usuario"
-    password: "contrasena"
   devtools:
     add-properties: false
   jackson:
     time-zone: "America/Bogota"
+  profiles:
+    active: local # Change to 'prod' for production
+
 security:
   jwt:
     secret: "Vna79qB2rPz6tXhE9fWcK5sJmG3dD8vA"
     expiration-seconds: 86400
+
 management:
   endpoints:
     web:
@@ -27,9 +25,12 @@ management:
     health:
       probes:
         enabled: true
+
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+
 adapter:
   sqs:
     region: "${AWS_REGION}"
     queue-url: "${SQS_QUEUE_URL}"
+    validation-queue-url: "${SQS_VALIDATION_QUEUE_URL}"

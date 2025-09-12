@@ -54,7 +54,7 @@ subprojects {
     test.finalizedBy(project.tasks.jacocoTestReport)
 
     pitest {
-        targetClasses = ['co.com.pragma--type&#61;reactive.*']
+        targetClasses = ['co.com.pragma.*']
         excludedClasses = []
         excludedTestClasses = []
         pitestVersion = '1.20.1'
@@ -66,7 +66,7 @@ subprojects {
         timestampedReports = false
         //mutators = ['STRONGER', 'DEFAULTS']
         fileExtensionsToFilter.addAll('xml', 'orbit')
-        junit5PluginVersion = '1.2.2'
+        junit5PluginVersion = '1.2.1'
         failWhenNoMutations = false
         jvmArgs = ["-XX:+AllowRedefinitionToAddDeleteMethods"]
     }

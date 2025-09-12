@@ -1,0 +1,8 @@
+spring:
+  r2dbc:
+    url: "r2dbc:pool:mysql://usuario:contrasena@crediya-mysql-loan:3306/crediya_db?sslMode=DISABLED&serverZoneId=America/Bogota&allowPublicKeyRetrieval=true"
+  flyway:
+    enabled: true
+    url: "jdbc:mysql://crediya-mysql-loan:3306/crediya_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Bogota"
+    user: "usuario"
+    password: "contrasena"
