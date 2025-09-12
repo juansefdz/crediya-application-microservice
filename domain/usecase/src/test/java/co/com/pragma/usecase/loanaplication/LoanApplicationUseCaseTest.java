@@ -1,6 +1,5 @@
 package co.com.pragma.usecase.loanaplication;
 
-
 import co.com.pragma.model.LoanApplicationStatus;
 import co.com.pragma.model.customExceptions.InvalidLoanApplicationException;
 import co.com.pragma.model.customExceptions.LoanTypeNotFoundException;
@@ -10,9 +9,11 @@ import co.com.pragma.model.loantype.LoanType;
 import co.com.pragma.model.loantype.gateways.LoanTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,27 +25,29 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoanApplicationUseCaseTest {
 
     @Mock
-    private LoanApplicationRepository loanApplicationRepository; // Dependencia Mock
-
+    private LoanApplicationRepository loanApplicationRepository;
     @Mock
-    private LoanTypeRepository loanTypeRepository; // Dependencia Mock
+    private LoanTypeRepository loanTypeRepository;
 
     @InjectMocks
-    private LoanApplicationUseCase loanApplicationUseCase; // La clase que probamos
+    private LoanApplicationUseCase loanApplicationUseCase;
+
+    @Captor
+    private ArgumentCaptor<LoanApplication> applicationCaptor;
 
     private LoanApplication validApplicationDraft;
     private LoanType validLoanType;
+    private final String LOAN_TYPE_ID = "d290f1ee-6c54-4b01-90e6-d701748f0851";
+
 
     @BeforeEach
     void setUp() {
-        // Objeto base para una solicitud válida que usaremos en múltiples pruebas
         validApplicationDraft = LoanApplication.builder()
                 .usuarioId("user-123")
                 .prestamoId("1")
@@ -52,134 +55,108 @@ class LoanApplicationUseCaseTest {
                 .plazo(12)
                 .build();
 
-        // Objeto base para un tipo de préstamo válido
         validLoanType = LoanType.builder()
-                .id(1L)
-                .nombre("Crédito de Libre Inversión")
+                .id(LOAN_TYPE_ID)
+                .nombre("Crédito de Consumo")
                 .montoMinimo(new BigDecimal("1000"))
                 .montoMaximo(new BigDecimal("50000"))
                 .build();
     }
 
     @Test
-    @DisplayName("Debe crear una solicitud de préstamo exitosamente cuando todos los datos son válidos")
+    @DisplayName("Debe crear una solicitud exitosamente cuando todos los datos son válidos")
     void shouldCreateLoanApplicationSuccessfully() {
-        // Arrange: Preparación del escenario
-        // 1. Simulamos que el tipo de préstamo existe
         when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(validLoanType));
-
-        // 2. Simulamos la operación de guardado en el repositorio
         when(loanApplicationRepository.save(any(LoanApplication.class)))
-                .thenAnswer(invocation -> {
-                    LoanApplication app = invocation.getArgument(0);
-                    // Devolvemos el objeto como lo haría el repositorio real (con ID y estado)
-                    return Mono.just(app);
-                });
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        // Act: Ejecutamos el caso de uso
         Mono<LoanApplication> result = loanApplicationUseCase.createLoanApplication(validApplicationDraft);
 
-        // Assert: Verificamos el resultado
         StepVerifier.create(result)
-                .assertNext(savedApp -> {
-                    assertThat(savedApp.getId()).isNotNull();
+                .expectNextMatches(savedApp -> {
                     assertThat(savedApp.getStatus()).isEqualTo(LoanApplicationStatus.PENDIENTE_REVISION);
+                    assertThat(savedApp.getId()).isNotNull();
                     assertThat(savedApp.getUsuarioId()).isEqualTo("user-123");
+                    return true;
                 })
                 .verifyComplete();
 
-        // Verificamos que los métodos de los mocks fueron llamados como se esperaba
-        verify(loanTypeRepository).findById(1L);
-        verify(loanApplicationRepository).save(any(LoanApplication.class));
+        verify(loanApplicationRepository).save(applicationCaptor.capture());
+        LoanApplication capturedApp = applicationCaptor.getValue();
+        assertThat(capturedApp.getStatus()).isEqualTo(LoanApplicationStatus.PENDIENTE_REVISION);
+        assertThat(capturedApp.getMonto()).isEqualTo(new BigDecimal("10000"));
     }
 
-    // --- Pruebas para Validaciones de Entrada ---
+    @Nested
+    @DisplayName("Pruebas de validación de reglas de negocio")
+    class BusinessRuleValidationTests {
 
-    @Test
-    @DisplayName("Debe retornar error si el monto es nulo")
-    void shouldReturnErrorWhenAmountIsNull() {
-        validApplicationDraft.setMonto(null);
+        @Test
+        @DisplayName("Debe fallar si el monto es nulo o cero")
+        void shouldFailWhenAmountIsInvalid() {
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().monto(null).build();
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectError(InvalidLoanApplicationException.class)
+                    .verify();
+        }
 
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectError(InvalidLoanApplicationException.class)
-                .verify();
-    }
+        @Test
+        @DisplayName("Debe fallar si el plazo es nulo o cero")
+        void shouldFailWhenTermIsInvalid() {
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().plazo(0).build();
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectError(InvalidLoanApplicationException.class)
+                    .verify();
+        }
 
-    @Test
-    @DisplayName("Debe retornar error si el plazo es cero")
-    void shouldReturnErrorWhenTermIsZero() {
-        validApplicationDraft.setPlazo(0);
+        @Test
+        @DisplayName("Debe fallar si el ID de usuario está en blanco")
+        void shouldFailWhenUserIdIsMissing() {
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().usuarioId("").build();
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectError(InvalidLoanApplicationException.class)
+                    .verify();
+        }
 
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectError(InvalidLoanApplicationException.class)
-                .verify();
-    }
+        @Test
+        @DisplayName("Debe fallar si el tipo de préstamo no se encuentra")
+        void shouldFailWhenLoanTypeIsNotFound() {
+            when(loanTypeRepository.findById(anyLong())).thenReturn(Mono.empty());
 
-    @Test
-    @DisplayName("Debe retornar error si el usuarioId es nulo o vacío")
-    void shouldReturnErrorWhenUserIdIsBlank() {
-        validApplicationDraft.setUsuarioId("");
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
+                    .expectError(LoanTypeNotFoundException.class)
+                    .verify();
+        }
 
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectError(InvalidLoanApplicationException.class)
-                .verify();
-    }
+        @Test
+        @DisplayName("Debe fallar si el ID del tipo de préstamo no es un número")
+        void shouldFailWhenLoanTypeIdIsNotANumber() {
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().prestamoId("invalid-id").build();
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectError(InvalidLoanApplicationException.class)
+                    .verify();
+        }
 
-    // --- Pruebas para Reglas de Negocio con Dependencias ---
+        @Test
+        @DisplayName("Debe fallar si el monto es menor al mínimo permitido")
+        void shouldFailWhenAmountIsBelowMinimum() {
+            when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(validLoanType));
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().monto(new BigDecimal("500")).build();
 
-    @Test
-    @DisplayName("Debe retornar LoanTypeNotFoundException si el tipo de préstamo no existe")
-    void shouldReturnErrorWhenLoanTypeNotFound() {
-        // Arrange: Simulamos que el repositorio no encuentra el tipo de préstamo
-        when(loanTypeRepository.findById(anyLong())).thenReturn(Mono.empty());
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectErrorMatches(e -> e instanceof InvalidLoanApplicationException && e.getMessage().contains("menor al mínimo permitido"))
+                    .verify();
+        }
 
-        // Act & Assert
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectError(LoanTypeNotFoundException.class)
-                .verify();
-    }
+        @Test
+        @DisplayName("Debe fallar si el monto es mayor al máximo permitido")
+        void shouldFailWhenAmountIsAboveMaximum() {
+            when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(validLoanType));
+            LoanApplication invalidApp = validApplicationDraft.toBuilder().monto(new BigDecimal("60000")).build();
 
-    @Test
-    @DisplayName("Debe retornar error si el monto es menor al mínimo permitido")
-    void shouldReturnErrorWhenAmountIsBelowMinimum() {
-        // Arrange
-        validApplicationDraft.setMonto(new BigDecimal("500")); // Monto por debajo del mínimo de 1000
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(validLoanType));
-
-        // Act & Assert
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof InvalidLoanApplicationException &&
-                                throwable.getMessage().contains("menor al mínimo permitido"))
-                .verify();
-    }
-
-    @Test
-    @DisplayName("Debe retornar error si el monto es mayor al máximo permitido")
-    void shouldReturnErrorWhenAmountIsAboveMaximum() {
-        // Arrange
-        validApplicationDraft.setMonto(new BigDecimal("60000")); // Monto por encima del máximo de 50000
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(validLoanType));
-
-        // Act & Assert
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof InvalidLoanApplicationException &&
-                                throwable.getMessage().contains("mayor al máximo permitido"))
-                .verify();
-    }
-
-    @Test
-    @DisplayName("Debe retornar error si el ID del tipo de préstamo no es un número válido")
-    void shouldReturnErrorForInvalidLoanTypeIdFormat() {
-        // Arrange
-        validApplicationDraft.setPrestamoId("TIPO_INVALIDO");
-
-        // Act & Assert
-        StepVerifier.create(loanApplicationUseCase.createLoanApplication(validApplicationDraft))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof InvalidLoanApplicationException &&
-                                throwable.getMessage().contains("no es un número válido"))
-                .verify();
+            StepVerifier.create(loanApplicationUseCase.createLoanApplication(invalidApp))
+                    .expectErrorMatches(e -> e instanceof InvalidLoanApplicationException && e.getMessage().contains("mayor al máximo permitido"))
+                    .verify();
+        }
     }
 }

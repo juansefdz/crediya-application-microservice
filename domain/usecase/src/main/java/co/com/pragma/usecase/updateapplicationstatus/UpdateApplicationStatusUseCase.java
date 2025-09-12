@@ -20,34 +20,31 @@ public class UpdateApplicationStatusUseCase {
     public Mono<LoanApplication> execute(String id, String nuevoEstadoStr) {
         log.info("CU-INICIO: Solicitud para cambiar estado de id={} a [{}].", id, nuevoEstadoStr);
 
-        final LoanApplicationStatus nuevoEstado;
-        try {
-            nuevoEstado = LoanApplicationStatus.valueOf(nuevoEstadoStr.toUpperCase());
-            if (nuevoEstado != LoanApplicationStatus.APROBADA && nuevoEstado != LoanApplicationStatus.RECHAZADA) {
-                return Mono.error(new InvalidStatusException(nuevoEstadoStr));
-            }
-        } catch (IllegalArgumentException e) {
-            return Mono.error(new InvalidStatusException(nuevoEstadoStr));
-        }
-
-        return loanApplicationRepository.findById(id)
-                .doOnNext(solicitud -> log.info("CU-PASO 1: Solicitud encontrada con estado actual [{}].", solicitud.getStatus()))
-                .switchIfEmpty(Mono.error(new LoanApplicationNotFoundException(id)))
-                .flatMap(solicitud -> {
-                    LoanApplication solicitudActualizada = solicitud.toBuilder()
-                            .status(nuevoEstado)
-                            .build();
-                    log.info("CU-PASO 2: Intentando actualizar solicitud con nuevo estado [{}].", nuevoEstado);
-                    return loanApplicationRepository.update(solicitudActualizada)
-                            .doOnError(e -> log.error("CU-ERROR: Falla al actualizar en la base de datos.", e));
-                })
-                .flatMap(solicitudGuardada -> {
-                    log.info("CU-PASO 3: Solicitud guardada. Enviando notificación para id={}.", solicitudGuardada.getId());
-                    return notificationRepository.sendNotificationCreditReport(solicitudGuardada)
-                            .doOnError(e -> log.error("CU-ERROR: Falla al enviar la notificación SQS.", e))
-                            .thenReturn(solicitudGuardada);
-                })
+        return Mono.fromCallable(() -> LoanApplicationStatus.valueOf(nuevoEstadoStr.toUpperCase()))
+                .onErrorMap(IllegalArgumentException.class, e -> new InvalidStatusException(nuevoEstadoStr))
+                .filter(estado -> estado == LoanApplicationStatus.APROBADA || estado == LoanApplicationStatus.RECHAZADA)
+                .switchIfEmpty(Mono.error(new InvalidStatusException(nuevoEstadoStr)))
+                .flatMap(nuevoEstado -> loanApplicationRepository.findById(id)
+                        .switchIfEmpty(Mono.error(new LoanApplicationNotFoundException(id)))
+                        .doOnNext(solicitud -> log.info("CU-PASO 1: Solicitud encontrada con estado actual [{}].", solicitud.getStatus()))
+                        .map(solicitud -> solicitud.toBuilder().status(nuevoEstado).build())
+                        .flatMap(solicitudActualizada -> {
+                            log.info("CU-PASO 2: Intentando actualizar solicitud con nuevo estado [{}].", solicitudActualizada.getStatus());
+                            return loanApplicationRepository.update(solicitudActualizada);
+                        })
+                )
+                .flatMap(this::sendNotificationAndContinue)
                 .doOnSuccess(res -> log.info("CU-FIN: Proceso completado exitosamente para id={}.", res.getId()))
                 .doOnError(e -> log.error("CU-FIN-ERROR: Error final en el flujo para id={}.", id, e));
+    }
+
+    private Mono<LoanApplication> sendNotificationAndContinue(LoanApplication savedApplication) {
+        log.info("CU-PASO 3: Solicitud guardada. Enviando notificación para id={}.", savedApplication.getId());
+        return notificationRepository.sendNotificationCreditReport(savedApplication)
+                .thenReturn(savedApplication)
+                .onErrorResume(error -> {
+                    log.error("CU-ERROR: Falla al enviar la notificación, pero la actualización principal fue exitosa.", error);
+                    return Mono.just(savedApplication);
+                });
     }
 }

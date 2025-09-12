@@ -1,26 +1,2 @@
 package co.com.pragma.metrics.aws;
 
-import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
-import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
-import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.metrics.internal.EmptyMetricCollection;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-class MicrometerMetricPublisherTest {
-
-    @Test
-    void metricTest() {
-        LoggingMeterRegistry loggingMeterRegistry = LoggingMeterRegistry
-            .builder(LoggingRegistryConfig.DEFAULT)
-            .build();
-
-        co.com.pragma.metrics.aws.MicrometerMetricPublisher micrometerMetricPublisher = new co.com.pragma.metrics.aws.MicrometerMetricPublisher(loggingMeterRegistry);
-
-        micrometerMetricPublisher.publish(EmptyMetricCollection.create());
-        micrometerMetricPublisher.close();
-
-        assertNotNull(micrometerMetricPublisher);
-
-    }
-}

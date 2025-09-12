@@ -1,6 +1,5 @@
 package co.com.pragma;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -48,22 +47,22 @@ class ArchitectureTest {
 
     @BeforeAll
     static void importClasses() {
-        allClasses = new ClassFileImporter().importPackages("co.com.pragma--type&amp;#61;reactive")
+        allClasses = new ClassFileImporter().importPackages("co.com.pragma")
                 .that(new DescribedPredicate<>("is-not-commons-lib") {
                     @Override
                     public boolean test(JavaClass javaClass) {
                         return !javaClass.getPackageName().contains("co.com.bancolombia.commons.jms");
                     }
                 });
-        domainClasses = new ClassFileImporter().importPackages("co.com.pragma--type&amp;#61;reactive.usecase", "co.com.pragma--type&amp;#61;reactive.model");
-        useCaseClasses = new ClassFileImporter().importPackages("co.com.pragma--type&amp;#61;reactive.usecase");
+        domainClasses = new ClassFileImporter().importPackages("co.com.pragma.usecase", "co.com.pragma.model");
+        useCaseClasses = new ClassFileImporter().importPackages("co.com.pragma.usecase");
     }
 
      @AfterAll
     static void exportIssues() {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            List.of("C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice\\applications\\app-service/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice\\domain\\usecase/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice\\domain\\model/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice\\infrastructure\\entry-points\\reactive-web/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\crediya-application-microservice\\infrastructure\\driven-adapters\\r2dbc-postgresql/").forEach(path -> {
+            List.of("C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\infrastructure\\driven-adapters\\sqs-sender/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\domain\\model/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\infrastructure\\entry-points\\reactive-web/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\domain\\usecase/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\applications\\app-service/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\infrastructure\\helpers\\metrics/","C:\\Users\\jsfm8\\OneDrive\\Escritorio\\CREDIYA\\crediya-application-microservice\\infrastructure\\driven-adapters\\r2dbc-postgresql/").forEach(path -> {
                 try {
                     Files.write(Path.of(path, "build/issues.json"), mapper.writeValueAsBytes(issues.getOrDefault(path, new Utils.IssuesReport())));
                 } catch (IOException e) {
@@ -102,7 +101,7 @@ class ArchitectureTest {
 
     @Test
     void domainClassesShouldNotBeNamedWithToolNames() {
-        ArchRule rule = Stream.of("rabbit","RABBIT","Rabbit","sqs","SQS","Sqs","sns","SNS","Sns","ibm","IBM","Ibm","dynamo","DYNAMO","Dynamo","aws","AWS","Aws","mysql","MYSQL","Mysql","postgres","POSTGRES","Postgres","redis","REDIS","Redis","mongo","MONGO","Mongo","rsocket","RSOCKET","Rsocket","r2dbc","R2DBC","R2dbc","http","HTTP","Http","kms","KMS","Kms","s3","S3","S3","graphql","GRAPHQL","Graphql","kafka","KAFKA","Kafka")
+        ArchRule rule = Stream.of("rabbit","RABBIT","Rabbit","sqs","SQS","Sqs","sns","SNS","Sns","ibm","IBM","Ibm","dynamo","DYNAMO","Dynamo","aws","AWS","Aws","mysql","MYSQL","Mysql","postgres","POSTGRES","Postgres","redis","REDIS","Redis","mongo","MONGO","Mongo","rsocket","RSOCKET","Rsocket","r2dbc","R2DBC","R2dbc","http","HTTP","Http","kms","KMS","Kms","s3","S3","S3","graphql","GRAPHQL","Graphql","kafka","KAFKA","Kafka","kafkastrimzi","KAFKASTRIMZI","Kafkastrimzi")
                 .reduce(classes().should().haveSimpleNameNotContaining("rabbit"),
                         (cj, tool) -> cj.andShould().haveSimpleNameNotContaining(tool),
                         (a, b) -> b)
@@ -127,7 +126,7 @@ class ArchitectureTest {
 
     @Test
     void domainClassesShouldNotHaveFieldsNamedWithToolNames() {
-        ArchRule rule = Stream.of("rabbit","RABBIT","Rabbit","sqs","SQS","Sqs","sns","SNS","Sns","ibm","IBM","Ibm","dynamo","DYNAMO","Dynamo","aws","AWS","Aws","mysql","MYSQL","Mysql","postgres","POSTGRES","Postgres","redis","REDIS","Redis","mongo","MONGO","Mongo","rsocket","RSOCKET","Rsocket","r2dbc","R2DBC","R2dbc","http","HTTP","Http","kms","KMS","Kms","s3","S3","S3","graphql","GRAPHQL","Graphql","kafka","KAFKA","Kafka")
+        ArchRule rule = Stream.of("rabbit","RABBIT","Rabbit","sqs","SQS","Sqs","sns","SNS","Sns","ibm","IBM","Ibm","dynamo","DYNAMO","Dynamo","aws","AWS","Aws","mysql","MYSQL","Mysql","postgres","POSTGRES","Postgres","redis","REDIS","Redis","mongo","MONGO","Mongo","rsocket","RSOCKET","Rsocket","r2dbc","R2DBC","R2dbc","http","HTTP","Http","kms","KMS","Kms","s3","S3","S3","graphql","GRAPHQL","Graphql","kafka","KAFKA","Kafka","kafkastrimzi","KAFKASTRIMZI","Kafkastrimzi")
                 .reduce((MembersShouldConjunction<?>) fields().should().haveNameNotContaining("rabbit"),
                         (cj, tool) -> cj.andShould().haveNameNotContaining(tool),
                         (a, b) -> b)

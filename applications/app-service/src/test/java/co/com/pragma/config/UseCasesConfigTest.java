@@ -1,47 +1,42 @@
-package co.com.pragma.config
+package co.com.pragma.config;
 
---type&#61;reactive.config;
+import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
+import co.com.pragma.model.loantype.gateways.LoanTypeRepository;
+import co.com.pragma.model.notification.gateways.NotificationRepository;
+import co.com.pragma.usecase.listapplications.ListApplicationsUseCase;
+import co.com.pragma.usecase.loanaplication.LoanApplicationUseCase;
+import co.com.pragma.usecase.updateapplicationstatus.UpdateApplicationStatusUseCase;
 
-import co.com.pragma.config.UseCasesConfig;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-public class UseCasesConfigTest {
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(classes = UseCasesConfig.class)
+class UseCasesConfigTest {
+
+    @Autowired
+    private ApplicationContext context;
+
+
+    @MockitoBean
+    private LoanApplicationRepository loanApplicationRepository;
+    @MockitoBean
+    private LoanTypeRepository loanTypeRepository;
+    @MockitoBean
+    private NotificationRepository notificationRepository;
 
     @Test
-    void testUseCaseBeansExist() {
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class)) {
-            String[] beanNames = context.getBeanDefinitionNames();
-
-            boolean useCaseBeanFound = false;
-            for (String beanName : beanNames) {
-                if (beanName.endsWith("UseCase")) {
-                    useCaseBeanFound = true;
-                    break;
-                }
-            }
-
-            assertTrue(useCaseBeanFound, "No beans ending with 'Use Case' were found");
-        }
-    }
-
-    @Configuration
-    @Import(UseCasesConfig.class)
-    static class TestConfig {
-
-        @Bean
-        public MyUseCase myUseCase() {
-            return new MyUseCase();
-        }
-    }
-
-    static class MyUseCase {
-        public String execute() {
-            return "MyUseCase Test";
-        }
+    @DisplayName("Debe crear todos los beans de Casos de Uso exitosamente")
+    void useCaseBeansShouldBeCreatedSuccessfully() {
+        assertThat(context.getBean(LoanApplicationUseCase.class)).isNotNull();
+        assertThat(context.getBean(UpdateApplicationStatusUseCase.class)).isNotNull();
+        assertThat(context.getBean(ListApplicationsUseCase.class)).isNotNull();
     }
 }

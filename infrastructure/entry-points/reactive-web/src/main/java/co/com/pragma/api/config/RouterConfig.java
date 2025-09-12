@@ -27,13 +27,14 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @Configuration
 public class RouterConfig {
 
-    private static final String API_PATH_PLURAL = "/api/v1/solicitudes";
-    private static final String API_PATH_SINGULAR_ID = "/api/v1/solicitud/{id}";
+    private static final String API_BASE_PATH = "/api/v1/solicitudes";
+    private static final String PATH_ID = "/{id}";
+    private static final String PATH_REVISION = "/revision";
 
     @Bean
     @RouterOperations({
             @RouterOperation(
-                    path = API_PATH_PLURAL,
+                    path = API_BASE_PATH,
                     method = RequestMethod.POST,
                     beanClass = Handler.class,
                     beanMethod = "createLoanApplication",
@@ -53,13 +54,32 @@ public class RouterConfig {
                     )
             ),
             @RouterOperation(
-                    path = API_PATH_PLURAL,
-                    produces = { MediaType.APPLICATION_JSON_VALUE },
+                    path = API_BASE_PATH,
                     method = RequestMethod.GET,
                     beanClass = Handler.class,
-                    beanMethod = "obtenerSolicitudes",
+                    beanMethod = "listAllApplications",
                     operation = @Operation(
-                            operationId = "obtenerSolicitudes",
+                            operationId = "listAllApplications",
+                            summary = "Obtener listado paginado de TODAS las solicitudes",
+                            tags = { "Solicitudes de Préstamo" },
+                            parameters = {
+                                    @Parameter(in = ParameterIn.QUERY, name = "page", description = "Número de página (inicia en 0)", schema = @Schema(type = "integer", defaultValue = "0")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "size", description = "Tamaño de la página", schema = @Schema(type = "integer", defaultValue = "10")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "sortBy", description = "Campo para ordenar", schema = @Schema(type = "string", defaultValue = "createdAt")),
+                                    @Parameter(in = ParameterIn.QUERY, name = "sortOrder", description = "Orden (ASC o DESC)", schema = @Schema(type = "string", defaultValue = "DESC"))
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "Operación exitosa", content = @Content(schema = @Schema(implementation = PageResponseDTO.class)))
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = API_BASE_PATH + PATH_REVISION,
+                    method = RequestMethod.GET,
+                    beanClass = Handler.class,
+                    beanMethod = "obtenerSolicitudesParaRevision",
+                    operation = @Operation(
+                            operationId = "obtenerSolicitudesParaRevision",
                             summary = "Obtener listado paginado de solicitudes para revisión",
                             tags = { "Solicitudes de Préstamo" },
                             parameters = {
@@ -69,18 +89,12 @@ public class RouterConfig {
                                     @Parameter(in = ParameterIn.QUERY, name = "sortOrder", description = "Orden (ASC o DESC)", schema = @Schema(type = "string", defaultValue = "ASC"))
                             },
                             responses = {
-                                    @ApiResponse(
-                                            responseCode = "200",
-                                            description = "Operación exitosa",
-                                            content = @Content(schema = @Schema(implementation = PageResponseDTO.class))
-                                    ),
-                                    @ApiResponse(responseCode = "401", description = "No autorizado"),
-                                    @ApiResponse(responseCode = "403", description = "Acceso prohibido")
+                                    @ApiResponse(responseCode = "200", description = "Operación exitosa", content = @Content(schema = @Schema(implementation = PageResponseDTO.class)))
                             }
                     )
             ),
             @RouterOperation(
-                    path = API_PATH_SINGULAR_ID,
+                    path = API_BASE_PATH + PATH_ID,
                     method = RequestMethod.PUT,
                     beanClass = Handler.class,
                     beanMethod = "updateApplicationStatus",
@@ -99,16 +113,15 @@ public class RouterConfig {
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "Solicitud actualizada exitosamente", content = @Content(schema = @Schema(implementation = LoanApplicationResponseDTO.class))),
                                     @ApiResponse(responseCode = "400", description = "Datos inválidos (ej. estado no permitido)"),
-                                    @ApiResponse(responseCode = "401", description = "No autorizado"),
-                                    @ApiResponse(responseCode = "403", description = "Acceso prohibido (rol no es Asesor)"),
                                     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
                             }
                     )
             )
     })
     public RouterFunction<ServerResponse> loanApplicationRoutes(Handler handler) {
-        return route(POST(API_PATH_PLURAL).and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication)
-                .andRoute(GET(API_PATH_PLURAL), handler::obtenerSolicitudes)
-                .andRoute(PUT(API_PATH_SINGULAR_ID).and(accept(MediaType.APPLICATION_JSON)), handler::updateApplicationStatus);
+        return route(POST(API_BASE_PATH).and(accept(MediaType.APPLICATION_JSON)), handler::createLoanApplication)
+                .andRoute(GET(API_BASE_PATH), handler::listAllApplications)
+                .andRoute(GET(API_BASE_PATH + PATH_REVISION), handler::obtenerSolicitudesParaRevision)
+                .andRoute(PUT(API_BASE_PATH + PATH_ID).and(accept(MediaType.APPLICATION_JSON)), handler::updateApplicationStatus);
     }
 }
