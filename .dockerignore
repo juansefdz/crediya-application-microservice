@@ -1,0 +1,27 @@
+# Archivos y carpetas de Gradle
+.gradle
+build
+out
+bin
+
+# Archivos de IDEs
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+*.class
+
+# Repositorios y control de versiones
+.git
+.gitignore
+*.md
+
+# Logs y temporales
+*.log
+*.tmp
+*.swp
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db

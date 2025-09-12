@@ -21,10 +21,9 @@ import java.net.URI;
 public class SQSSenderConfig {
 
     @Bean
-    public SqsAsyncClient configSqs(SQSSenderProperties properties, MetricPublisher publisher) {
+    public SqsAsyncClient configSqs(SQSSenderProperties properties) {
         var builder = SqsAsyncClient.builder()
                 .region(Region.of(properties.region()))
-                .overrideConfiguration(o -> o.addMetricPublisher(publisher))
                 .credentialsProvider(getProviderChain());
 
         if (properties.endpoint() != null && !properties.endpoint().isBlank()) {
