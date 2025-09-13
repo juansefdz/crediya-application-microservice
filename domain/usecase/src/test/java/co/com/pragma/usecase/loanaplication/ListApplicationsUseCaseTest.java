@@ -2,7 +2,6 @@ package co.com.pragma.usecase.loanaplication;
 
 import co.com.pragma.model.DataPage;
 import co.com.pragma.model.LoanApplicationStatus;
-import co.com.pragma.model.customExceptions.InvalidPaginationException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;

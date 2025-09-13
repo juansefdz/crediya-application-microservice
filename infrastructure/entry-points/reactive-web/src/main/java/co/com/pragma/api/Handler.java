@@ -6,7 +6,6 @@ import co.com.pragma.api.dto.PageResponseDTO;
 import co.com.pragma.api.dto.UpdateStatusRequestDTO;
 import co.com.pragma.api.mapper.LoanApplicationApiMapper;
 import co.com.pragma.model.DataPage;
-import co.com.pragma.model.customExceptions.BusinessException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.usecase.listapplications.ListApplicationsUseCase;
 import co.com.pragma.usecase.loanaplication.LoanApplicationUseCase;
@@ -32,21 +31,26 @@ public class Handler {
     private final LoanApplicationApiMapper apiMapper;
 
     public Mono<ServerResponse> createLoanApplication(ServerRequest request) {
+        log.info("Procesando solicitud de préstamo");
+
         return request.bodyToMono(LoanApplicationRequestDTO.class)
                 .map(apiMapper::toDomain)
                 .flatMap(loanApplicationUseCase::createLoanApplication)
                 .map(apiMapper::toDTO)
-                .flatMap(dto -> ServerResponse.status(HttpStatus.CREATED).bodyValue(dto))
-                .onErrorResume(BusinessException.class, e -> ServerResponse.badRequest().bodyValue(e.getMessage()))
-                .onErrorResume(Exception.class, e -> {
-                    log.error("HANDLER: Error inesperado al crear solicitud:", e);
-                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue("Error inesperado.");
-                });
+                .flatMap(dto -> ServerResponse.status(HttpStatus.CREATED).bodyValue(dto));
     }
 
-    /**
-     * Endpoint para obtener las solicitudes que necesitan revisión.
-     */
+    public Mono<ServerResponse> updateApplicationStatus(ServerRequest request) {
+        String id = request.pathVariable("id");
+        log.info("Actualizando estado de solicitud {}", id);
+
+        return request.bodyToMono(UpdateStatusRequestDTO.class)
+                .flatMap(dto -> updateApplicationStatusUseCase.execute(id, dto.getNuevoEstado()))
+                .map(apiMapper::toDTO)
+                .flatMap(dto -> ServerResponse.ok().bodyValue(dto));
+
+    }
+
     public Mono<ServerResponse> obtenerSolicitudesParaRevision(ServerRequest request) {
         int page = request.queryParam("page").map(Integer::parseInt).orElse(0);
         int size = request.queryParam("size").map(Integer::parseInt).orElse(10);
@@ -57,9 +61,6 @@ public class Handler {
         return buildPaginatedResponse(pageData);
     }
 
-    /**
-     * Endpoint para obtener TODAS las solicitudes.
-     */
     public Mono<ServerResponse> listAllApplications(ServerRequest request) {
         int page = request.queryParam("page").map(Integer::parseInt).orElse(0);
         int size = request.queryParam("size").map(Integer::parseInt).orElse(10);
@@ -70,19 +71,6 @@ public class Handler {
         return buildPaginatedResponse(pageData);
     }
 
-    public Mono<ServerResponse> updateApplicationStatus(ServerRequest request) {
-        String id = request.pathVariable("id");
-        return request.bodyToMono(UpdateStatusRequestDTO.class)
-                .flatMap(dto -> updateApplicationStatusUseCase.execute(id, dto.getNuevoEstado()))
-                .map(apiMapper::toDTO)
-                .flatMap(dto -> ServerResponse.ok().bodyValue(dto))
-                .onErrorResume(BusinessException.class, e -> ServerResponse.badRequest().bodyValue(e.getMessage()))
-                .onErrorResume(Exception.class, e -> {
-                    log.error("HANDLER: Error inesperado al actualizar {}:", id, e);
-                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue("Error inesperado.");
-                });
-    }
-
     private Mono<ServerResponse> buildPaginatedResponse(Mono<DataPage<LoanApplication>> pageResponseMono) {
         return pageResponseMono.flatMap(pageResponse -> {
             List<LoanApplicationSummaryDTO> dtoList = pageResponse.getContent().stream()
@@ -91,9 +79,9 @@ public class Handler {
 
             PageResponseDTO<LoanApplicationSummaryDTO> responseDto = PageResponseDTO.<LoanApplicationSummaryDTO>builder()
                     .content(dtoList)
-                    .currentPage(pageResponse.getCurrentPage())
                     .totalElements(pageResponse.getTotalElements())
                     .totalPages(pageResponse.getTotalPages())
+                    .currentPage(pageResponse.getCurrentPage())
                     .build();
 
             return ServerResponse.ok().bodyValue(responseDto);

@@ -1,8 +1,8 @@
 package co.com.pragma.usecase.updateapplicationstatus;
 
+import co.com.pragma.model.ErrorCode;
 import co.com.pragma.model.LoanApplicationStatus;
-import co.com.pragma.model.customExceptions.LoanApplicationNotFoundException;
-import co.com.pragma.model.customExceptions.InvalidStatusException;
+import co.com.pragma.model.customExceptions.BusinessException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.pragma.model.notification.gateways.NotificationRepository;
@@ -21,11 +21,11 @@ public class UpdateApplicationStatusUseCase {
         log.info("CU-INICIO: Solicitud para cambiar estado de id={} a [{}].", id, nuevoEstadoStr);
 
         return Mono.fromCallable(() -> LoanApplicationStatus.valueOf(nuevoEstadoStr.toUpperCase()))
-                .onErrorMap(IllegalArgumentException.class, e -> new InvalidStatusException(nuevoEstadoStr))
+                .onErrorMap(IllegalArgumentException.class, e -> new BusinessException(ErrorCode.VAL_STATUS_INVALID, nuevoEstadoStr))
                 .filter(estado -> estado == LoanApplicationStatus.APROBADA || estado == LoanApplicationStatus.RECHAZADA)
-                .switchIfEmpty(Mono.error(new InvalidStatusException(nuevoEstadoStr)))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.VAL_STATUS_INVALID, nuevoEstadoStr)))
                 .flatMap(nuevoEstado -> loanApplicationRepository.findById(id)
-                        .switchIfEmpty(Mono.error(new LoanApplicationNotFoundException(id)))
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.APP_NOT_FOUND, id)))
                         .doOnNext(solicitud -> log.info("CU-PASO 1: Solicitud encontrada con estado actual [{}].", solicitud.getStatus()))
                         .map(solicitud -> solicitud.toBuilder().status(nuevoEstado).build())
                         .flatMap(solicitudActualizada -> {
@@ -35,7 +35,8 @@ public class UpdateApplicationStatusUseCase {
                 )
                 .flatMap(this::sendNotificationAndContinue)
                 .doOnSuccess(res -> log.info("CU-FIN: Proceso completado exitosamente para id={}.", res.getId()))
-                .doOnError(e -> log.error("CU-FIN-ERROR: Error final en el flujo para id={}.", id, e));
+                .doOnError(BusinessException.class, e -> log.warn("Fallo de negocio controlado [{}]: {}", e.getCode(), e.getMessage()))
+                .doOnError(e -> !(e instanceof BusinessException), e -> log.error("CU-FIN-ERROR: Error final en el flujo para id={}.", id, e));
     }
 
     private Mono<LoanApplication> sendNotificationAndContinue(LoanApplication savedApplication) {

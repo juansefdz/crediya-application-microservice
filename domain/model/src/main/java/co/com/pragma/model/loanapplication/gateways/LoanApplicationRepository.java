@@ -1,6 +1,7 @@
 package co.com.pragma.model.loanapplication.gateways;
 
 
+import co.com.pragma.model.LoanApplicationStatus;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,5 +18,7 @@ public interface LoanApplicationRepository {
 
     Mono<Long> countAll();
     Flux<LoanApplication> findAll(int page, int size, String sortBy, String sortOrder);
+
+    Flux<LoanApplication> findByUserIdAndStatus(String userId, LoanApplicationStatus status);
 }
 

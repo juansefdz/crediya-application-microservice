@@ -1,5 +1,6 @@
 package co.com.pragma.r2dbc.adapter;
 
+import co.com.pragma.model.LoanApplicationStatus;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.pragma.r2dbc.data.LoanApplicationData;
@@ -64,6 +65,11 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
         Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return dataRepository.findAllBy(pageable).map(mapper::toDomain);
+    }
+    @Override
+    public Flux<LoanApplication> findByUserIdAndStatus(String userId, LoanApplicationStatus status) {
+        return dataRepository.findByUserIdAndStatus(userId, status.name())
+                .map(mapper::toDomain);
     }
 
     @Override

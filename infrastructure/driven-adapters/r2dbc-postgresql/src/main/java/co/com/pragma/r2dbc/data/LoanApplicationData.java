@@ -11,6 +11,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
+
 @Data
 @NoArgsConstructor
 @Table("solicitud")
@@ -20,8 +21,9 @@ public class LoanApplicationData implements Persistable<String> {
         @Column("id_solicitud")
         private String id;
 
+
         @Column("documento_cliente")
-        private String customerDocument;
+        private String userId;
 
         @Column("email")
         private String email;
@@ -32,11 +34,13 @@ public class LoanApplicationData implements Persistable<String> {
         @Column("plazo")
         private Integer plazo;
 
+
         @Column("id_tipo_prestamo")
-        private Long idTipoPrestamo;
+        private String prestamoId;
+
 
         @Column("id_estado")
-        private LoanApplicationStatus status;
+        private Integer status;
 
         @Transient
         private boolean newEntity = true;

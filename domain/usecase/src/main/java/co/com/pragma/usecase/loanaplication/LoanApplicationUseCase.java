@@ -1,18 +1,19 @@
 package co.com.pragma.usecase.loanaplication;
 
+import co.com.pragma.model.ErrorCode;
 import co.com.pragma.model.LoanApplicationStatus;
-import co.com.pragma.model.customExceptions.InvalidLoanApplicationException;
-import co.com.pragma.model.customExceptions.LoanTypeNotFoundException;
+import co.com.pragma.model.customExceptions.BusinessException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
+import co.com.pragma.model.loantype.LoanType;
 import co.com.pragma.model.loantype.gateways.LoanTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 
 @Slf4j
 @RequiredArgsConstructor
@@ -22,58 +23,56 @@ public class LoanApplicationUseCase {
     private final LoanTypeRepository loanTypeRepository;
 
     public Mono<LoanApplication> createLoanApplication(LoanApplication applicationDraft) {
-        log.info("Iniciando CU para crear solicitud. usuarioId={}, prestamoId={}",
-                applicationDraft.getUsuarioId(), applicationDraft.getPrestamoId());
+        log.info("Iniciando CU para crear solicitud. usuarioId={}", applicationDraft.getUsuarioId());
 
-        return validateBusinessRules(applicationDraft)
+        return this.validate(applicationDraft)
                 .map(this::prepareForSave)
-                .doOnNext(appToSave -> log.info("OBJETO ANTES DE GUARDAR: {}", appToSave))
                 .flatMap(loanApplicationRepository::save)
-                .doOnSuccess(saved -> log.info("Solicitud creada OK. id={}, usuarioId={}, estado={}",
-                        saved.getId(), saved.getUsuarioId(), saved.getStatus()))
-                .doOnError(e -> log.error("Error creando solicitud para usuarioId={}: {}",
-                        applicationDraft.getUsuarioId(), e.getMessage()));
+                .doOnSuccess(saved -> log.info("Solicitud creada OK. id={}, usuarioId={}", saved.getId(), saved.getUsuarioId()))
+                .doOnError(BusinessException.class, e -> log.warn("Fallo de negocio controlado [{}]: {}", e.getCode(), e.getMessage()))
+                .doOnError(e -> !(e instanceof BusinessException), e -> log.error("Error no controlado creando solicitud", e));
     }
 
-    private Mono<LoanApplication> validateBusinessRules(LoanApplication app) {
-        return Mono.defer(() -> {
-            if (app.getMonto() == null || app.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
-                return Mono.error(new InvalidLoanApplicationException("El monto de la solicitud debe ser mayor a cero."));
-            }
-            if (app.getPlazo() == null || app.getPlazo() <= 0) {
-                return Mono.error(new InvalidLoanApplicationException("El plazo debe ser de al menos un mes."));
-            }
-            if (app.getPrestamoId() == null || app.getPrestamoId().isBlank()) {
-                return Mono.error(new InvalidLoanApplicationException("El tipo de préstamo es obligatorio."));
-            }
+    private Mono<Tuple2<LoanApplication, LoanType>> validate(LoanApplication app) {
 
-            if (app.getUsuarioId() == null || app.getUsuarioId().isBlank()) {
-                return Mono.error(new InvalidLoanApplicationException("La identificación del usuario es obligatoria."));
-            }
-
-            try {
-                Long loanTypeId = Long.valueOf(app.getPrestamoId());
-                return loanTypeRepository.findById(loanTypeId)
-                        .switchIfEmpty(Mono.error(new LoanTypeNotFoundException(app.getPrestamoId())))
-                        .flatMap(loanType -> {
-                            if (app.getMonto().compareTo(loanType.getMontoMinimo()) < 0) {
-                                return Mono.error(new InvalidLoanApplicationException(
-                                        "El monto solicitado de $" + app.getMonto() + " es menor al mínimo permitido de $" + loanType.getMontoMinimo()));
-                            }
-                            if (app.getMonto().compareTo(loanType.getMontoMaximo()) > 0) {
-                                return Mono.error(new InvalidLoanApplicationException(
-                                        "El monto solicitado de $" + app.getMonto() + " es mayor al máximo permitido de $" + loanType.getMontoMaximo()));
-                            }
-                            return Mono.just(app);
-                        });
-            } catch (NumberFormatException e) {
-                return Mono.error(new InvalidLoanApplicationException(
-                        "El ID del tipo de préstamo no es un número válido: " + app.getPrestamoId()));
-            }
-        });
+        return Mono.just(app)
+                .flatMap(this::validateInitialData)
+                .flatMap(this::validateLoanTypeAndLimits);
     }
 
-    private LoanApplication prepareForSave(LoanApplication app) {
+    private Mono<LoanApplication> validateInitialData(LoanApplication app) {
+        if (app.getMonto() == null || app.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
+            return Mono.error(new BusinessException(ErrorCode.VAL_AMOUNT_INVALID));
+        }
+        if (app.getPlazo() == null || app.getPlazo() <= 0) {
+            return Mono.error(new BusinessException(ErrorCode.VAL_TERM_INVALID));
+        }
+        if (app.getPrestamoId() == null || app.getPrestamoId().isBlank()) {
+            return Mono.error(new BusinessException(ErrorCode.VAL_LOAN_TYPE_ID_REQUIRED));
+        }
+        if (app.getUsuarioId() == null || app.getUsuarioId().isBlank()) {
+            return Mono.error(new BusinessException(ErrorCode.VAL_USER_ID_REQUIRED));
+        }
+        return Mono.just(app);
+    }
+
+    private Mono<Tuple2<LoanApplication, LoanType>> validateLoanTypeAndLimits(LoanApplication app) {
+        String loanTypeId = app.getPrestamoId();
+        return loanTypeRepository.findById(Long.valueOf(loanTypeId))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.LTY_NOT_FOUND, loanTypeId)))
+                .flatMap(loanType -> {
+                    if (app.getMonto().compareTo(loanType.getMontoMinimo()) < 0) {
+                        return Mono.error(new BusinessException(ErrorCode.VAL_AMOUNT_MIN_EXCEEDED));
+                    }
+                    if (app.getMonto().compareTo(loanType.getMontoMaximo()) > 0) {
+                        return Mono.error(new BusinessException(ErrorCode.VAL_AMOUNT_MAX_EXCEEDED));
+                    }
+                    return Mono.zip(Mono.just(app), Mono.just(loanType));
+                });
+    }
+
+    private LoanApplication prepareForSave(Tuple2<LoanApplication, LoanType> tuple) {
+        LoanApplication app = tuple.getT1();
         return app.toBuilder()
                 .id(UUID.randomUUID().toString())
                 .status(LoanApplicationStatus.PENDIENTE_REVISION)

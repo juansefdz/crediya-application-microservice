@@ -1,32 +1,19 @@
 package co.com.pragma.r2dbc.mapper;
 
-
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.r2dbc.data.LoanApplicationData;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LoanApplicationPersistenceMapper {
 
-    @Mappings({
-            @Mapping(target = "id",               source = "id"),
-            @Mapping(target = "customerDocument", source = "usuarioId"),
-            @Mapping(target = "email",            source = "email"),
-            @Mapping(target = "monto",            source = "monto"),
-            @Mapping(target = "plazo",            source = "plazo"),
-            @Mapping(target = "idTipoPrestamo",
-                    expression = "java(domain.getPrestamoId() == null ? null : Long.valueOf(domain.getPrestamoId()))"),
-            @Mapping(target = "status",           source = "status")
-    })
+    @Mapping(target = "status", expression = "java(domain.getStatus() == null ? null : domain.getStatus().getId())")
+    @Mapping(target = "userId", source = "usuarioId")
     LoanApplicationData toData(LoanApplication domain);
 
-    @AfterMapping
-    default void forceInsert(@MappingTarget LoanApplicationData target) {
-        target.markNew();
-    }
-
-    @Mapping(target = "usuarioId", source = "customerDocument")
-    @Mapping(target = "prestamoId",
-            expression = "java(data.getIdTipoPrestamo() == null ? null : String.valueOf(data.getIdTipoPrestamo()))")
+    @Mapping(target = "status", expression = "java(data.getStatus() == null ? null : co.com.pragma.model.LoanApplicationStatus.fromId(data.getStatus()))")
+    @Mapping(target = "usuarioId", source = "userId")
     LoanApplication toDomain(LoanApplicationData data);
 }

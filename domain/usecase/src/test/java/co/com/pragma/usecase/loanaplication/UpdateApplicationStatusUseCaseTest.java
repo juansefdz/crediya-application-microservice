@@ -2,8 +2,6 @@ package co.com.pragma.usecase.loanaplication;
 
 
 import co.com.pragma.model.LoanApplicationStatus;
-import co.com.pragma.model.customExceptions.InvalidStatusException;
-import co.com.pragma.model.customExceptions.LoanApplicationNotFoundException;
 import co.com.pragma.model.loanapplication.LoanApplication;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.pragma.model.notification.gateways.NotificationRepository;

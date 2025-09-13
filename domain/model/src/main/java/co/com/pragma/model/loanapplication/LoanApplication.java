@@ -18,6 +18,4 @@ public class LoanApplication {
     private String prestamoId;
     private LoanApplicationStatus status;
 
-    public void setPrestamoId(String tipoInvalido) {
-    }
 }

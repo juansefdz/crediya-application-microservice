@@ -5,9 +5,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
-@Data
 @Builder
+@Data
 public class ErrorResponseDTO {
     private LocalDateTime timestamp;
     private int status;
