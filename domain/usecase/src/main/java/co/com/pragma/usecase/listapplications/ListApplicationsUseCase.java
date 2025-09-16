@@ -41,13 +41,13 @@ public class ListApplicationsUseCase {
         log.info("CU: Obteniendo solicitudes para revisión. Página: {}, Tamaño: {}", page, size);
 
         return validatePagination(page, size).then(Mono.defer(() -> {
-            List<Integer> statusIds = ESTADOS_PARA_REVISION.stream()
-                    .map(LoanApplicationStatus::getId)
+            List<String> statusNames = ESTADOS_PARA_REVISION.stream()
+                    .map(Enum::name)
                     .collect(Collectors.toList());
 
-            Mono<Long> totalElementsMono = loanApplicationRepository.countByStatusIn(statusIds);
+            Mono<Long> totalElementsMono = loanApplicationRepository.countByStatusIn(statusNames);
             Mono<List<LoanApplication>> contentMono = loanApplicationRepository
-                    .findByStatusIn(statusIds, page, size, sortBy, sortOrder)
+                    .findByStatusIn(statusNames, page, size, sortBy, sortOrder)
                     .collectList();
             return buildPageResponse(contentMono, totalElementsMono, page, size);
         }));

@@ -20,34 +20,25 @@ public class LoanApplicationData implements Persistable<String> {
         @Id
         @Column("id_solicitud")
         private String id;
-
-
-        @Column("documento_cliente")
-        private String userId;
-
+        @Column("usuario_id")
+        private String usuarioId;
+        @Column("nombre_cliente")
+        private String nombreCliente;
         @Column("email")
         private String email;
-
         @Column("monto")
         private BigDecimal monto;
-
         @Column("plazo")
         private Integer plazo;
-
-
         @Column("id_tipo_prestamo")
-        private String prestamoId;
-
-
+        private Long prestamoId;
         @Column("id_estado")
-        private Integer status;
+        private String status;
 
         @Transient
         private boolean newEntity = true;
-
         @Override public String getId() { return id; }
         @Override public boolean isNew() { return newEntity; }
 
-        public void markNew()   { this.newEntity = true; }
         public void markSaved() { this.newEntity = false; }
 }

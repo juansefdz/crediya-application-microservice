@@ -25,5 +25,5 @@ public class LoanTypeData {
     @Column("tasa_interes")
     private Double tasaInteres;
     @Column("validacion_automatica")
-    private Boolean validacionAutomatica;
+    private Boolean automaticValidation;
 }

@@ -17,12 +17,7 @@ public class LoanTypeRepositoryAdapter implements LoanTypeRepository {
     private final LoanTypePersistenceMapper mapper;
 
     @Override
-    public Mono<Boolean> existsById(Long id) {
-        return repository.existsById(id);
-    }
-
-    @Override
-    public Mono<LoanType> findById(Long id) {
+    public Mono<LoanType> findById(Long  id) {
         return repository.findById(id).map(mapper::toDomain);
     }
 

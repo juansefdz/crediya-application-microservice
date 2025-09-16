@@ -3,6 +3,7 @@ package co.com.pragma.config;
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.pragma.model.loantype.gateways.LoanTypeRepository;
 import co.com.pragma.model.notification.gateways.NotificationRepository;
+import co.com.pragma.model.sqs.gateways.SqsNotificationGateway;
 import co.com.pragma.usecase.listapplications.ListApplicationsUseCase;
 import co.com.pragma.usecase.loanaplication.LoanApplicationUseCase;
 import co.com.pragma.usecase.updateapplicationstatus.UpdateApplicationStatusUseCase;
@@ -15,8 +16,10 @@ public class UseCasesConfig {
         @Bean
         public LoanApplicationUseCase loanApplicationUseCase(
                 LoanApplicationRepository loanApplicationRepository,
-                LoanTypeRepository loanTypeRepository) {
-                return new LoanApplicationUseCase(loanApplicationRepository, loanTypeRepository);
+                LoanTypeRepository loanTypeRepository,
+                SqsNotificationGateway sqsGateway) {
+
+                return new LoanApplicationUseCase(loanApplicationRepository, loanTypeRepository, sqsGateway);
         }
 
         @Bean
@@ -31,5 +34,6 @@ public class UseCasesConfig {
                 LoanApplicationRepository loanApplicationRepository) {
                 return new ListApplicationsUseCase(loanApplicationRepository);
         }
+
 
 }

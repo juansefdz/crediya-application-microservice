@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 public class UpdateApplicationStatusUseCase {
@@ -27,9 +29,17 @@ public class UpdateApplicationStatusUseCase {
                 .flatMap(nuevoEstado -> loanApplicationRepository.findById(id)
                         .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.APP_NOT_FOUND, id)))
                         .doOnNext(solicitud -> log.info("CU-PASO 1: Solicitud encontrada con estado actual [{}].", solicitud.getStatus()))
-                        .map(solicitud -> solicitud.toBuilder().status(nuevoEstado).build())
+                        .flatMap(solicitud -> {
+                            // Valida que la solicitud no esté ya en un estado final
+                            List<LoanApplicationStatus> finalStatuses = List.of(LoanApplicationStatus.APROBADA, LoanApplicationStatus.RECHAZADA);
+                            if (finalStatuses.contains(solicitud.getStatus())) {
+                                // Reporta el estado actual correcto en el error
+                                return Mono.error(new BusinessException(ErrorCode.APP_STATE_CONFLICT, solicitud.getStatus().name()));
+                            }
+                            return Mono.just(solicitud.toBuilder().status(nuevoEstado).build());
+                        })
                         .flatMap(solicitudActualizada -> {
-                            log.info("CU-PASO 2: Intentando actualizar solicitud con nuevo estado [{}].", solicitudActualizada.getStatus());
+                            log.info("CU-PASO 2: Intentando actualizar con nuevo estado [{}].", solicitudActualizada.getStatus());
                             return loanApplicationRepository.update(solicitudActualizada);
                         })
                 )

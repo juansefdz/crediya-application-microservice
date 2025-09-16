@@ -32,17 +32,17 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
     }
 
     @Override
-    public Flux<LoanApplication> findByStatusIn(List<Integer> statusIds, int page, int size, String sortBy, String sortOrder) {
+    public Flux<LoanApplication> findByStatusIn(List<String> statusNames, int page, int size, String sortBy, String sortOrder) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        return dataRepository.findByStatusIn(statusIds, pageable)
+        return dataRepository.findByStatusIn(statusNames, pageable)
                 .map(mapper::toDomain);
     }
 
     @Override
-    public Mono<Long> countByStatusIn(List<Integer> statusIds) {
-        return dataRepository.countByStatusIn(statusIds);
+    public Mono<Long> countByStatusIn(List<String> statusNames) {
+        return dataRepository.countByStatusIn(statusNames);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class LoanApplicationRepositoryAdapter implements LoanApplicationReposito
     }
     @Override
     public Flux<LoanApplication> findByUserIdAndStatus(String userId, LoanApplicationStatus status) {
-        return dataRepository.findByUserIdAndStatus(userId, status.name())
+        return dataRepository.findByUsuarioIdAndStatus(userId, status.name())
                 .map(mapper::toDomain);
     }
 

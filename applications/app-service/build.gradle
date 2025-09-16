@@ -13,8 +13,8 @@ dependencies {
     implementation project(':usecase')
     implementation project(':r2dbc-postgresql')
 
-    compileOnly 'org.slf4j:slf4j-api'
-    compileOnly 'io.projectreactor:reactor-core'
+    implementation 'org.slf4j:slf4j-api'
+    implementation 'io.projectreactor:reactor-core'
 
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-webflux'

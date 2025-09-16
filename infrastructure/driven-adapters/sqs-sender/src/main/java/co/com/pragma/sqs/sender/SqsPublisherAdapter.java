@@ -1,9 +1,8 @@
 package co.com.pragma.sqs.sender;
 
 import co.com.pragma.model.loanapplication.LoanApplication;
-import co.com.pragma.model.notification.gateways.NotificationRepository;
+import co.com.pragma.model.sqs.gateways.SqsNotificationGateway;
 import co.com.pragma.sqs.sender.config.SQSSenderProperties;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,28 +11,22 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
-import java.math.BigDecimal;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificacionSqsAdapter implements NotificationRepository {
+public class SqsPublisherAdapter implements SqsNotificationGateway {
 
     private final SQSSenderProperties properties;
     private final SqsAsyncClient client;
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> sendNotificationCreditReport(LoanApplication solicitud) {
+    public Mono<Void> sendMessageForValidation(LoanApplication application) {
         return Mono.fromCallable(() -> {
-                    var messageDto = new NotificacionMessageDTO(
-                            solicitud.getUsuarioId(),
-                            solicitud.getEmail(),
-                            solicitud.getStatus().name(),
-                            solicitud.getId(),
-                            solicitud.getPlazo(),
-                            solicitud.getMonto(),
-                            solicitud.getNombreCliente()
+
+                    var messageDto = new ValidationMessageDTO(
+                            application.getId(),
+                            application.getUsuarioId()
                     );
                     return objectMapper.writeValueAsString(messageDto);
                 })
@@ -44,17 +37,17 @@ public class NotificacionSqsAdapter implements NotificationRepository {
     private Mono<String> send(String jsonMessage) {
         return Mono.fromCallable(() -> buildRequest(jsonMessage))
                 .flatMap(request -> Mono.fromFuture(client.sendMessage(request)))
-                .doOnSuccess(response -> log.info("Mensaje enviado a SQS con éxito. MessageId: {}", response.messageId()))
-                .doOnError(e -> log.error("Error al enviar mensaje a SQS: ", e))
+                .doOnSuccess(response -> log.info("Mensaje de validación enviado a SQS. MessageId: {}", response.messageId()))
+                .doOnError(e -> log.error("Error al enviar mensaje de validación a SQS: ", e))
                 .map(response -> response.messageId());
     }
 
     private SendMessageRequest buildRequest(String message) {
         return SendMessageRequest.builder()
-                .queueUrl(properties.notificationQueueUrl())
+                .queueUrl(properties.validationQueueUrl()) // <-- Apunta a la cola de validación
                 .messageBody(message)
                 .build();
     }
 
-    private record NotificacionMessageDTO(String usuarioId, String email, String estado, String solicitudId, Integer plazo, BigDecimal monto, String nombreCliente) {}
+    private record ValidationMessageDTO(String loanApplicationId, String userId) {}
 }

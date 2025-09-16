@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'co.com.pragma'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Dependencias a los módulos de tu proyecto principal
+    implementation project(':model')
+    implementation project(':usecase')
+
+
+    // AWS Lambda
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.13.0'
+
+    // Comunicación y Datos (WebClient y Jackson)
+    // Excluye el logging de TODOS los starters de Spring
+    implementation('org.springframework.boot:spring-boot-starter-webflux:3.3.1') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    implementation('org.springframework.boot:spring-boot-starter:3.3.1') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+
+    // Logging (usa solo tus dependencias explícitas de Log4j)
+    // Se recomienda una versión específica y completa
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+
+
+    // Otras dependencias
+    implementation 'org.springframework:spring-webflux'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Pruebas
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': 'co.com.pragma.lambda.handler.DebtCapacityHandler'
+    }
+    archiveClassifier.set('')
+    mergeServiceFiles()
+}

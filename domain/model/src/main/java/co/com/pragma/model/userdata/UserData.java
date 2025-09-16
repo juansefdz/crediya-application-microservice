@@ -9,6 +9,6 @@ import java.math.BigDecimal;
 @Builder(toBuilder = true)
 public class UserData {
     private String id;
-    private BigDecimal totalIncome; // Ingresos Totales
+    private BigDecimal totalIncome;
 
 }

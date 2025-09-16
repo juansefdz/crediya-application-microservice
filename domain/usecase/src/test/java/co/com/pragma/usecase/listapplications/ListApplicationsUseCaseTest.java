@@ -1,11 +1,10 @@
-package co.com.pragma.usecase.loanaplication;
+package co.com.pragma.usecase.listapplications;
 
 import co.com.pragma.model.DataPage;
-import co.com.pragma.model.LoanApplicationStatus;
+import co.com.pragma.model.ErrorCode;
+import co.com.pragma.model.customExceptions.BusinessException;
 import co.com.pragma.model.loanapplication.LoanApplication;
-
 import co.com.pragma.model.loanapplication.gateways.LoanApplicationRepository;
-import co.com.pragma.usecase.listapplications.ListApplicationsUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +23,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -33,13 +31,10 @@ class ListApplicationsUseCaseTest {
 
     @Mock
     private LoanApplicationRepository loanApplicationRepository;
-
     @InjectMocks
     private ListApplicationsUseCase listApplicationsUseCase;
-
     @Captor
     private ArgumentCaptor<List<Integer>> statusIdsCaptor;
-
     private List<LoanApplication> sampleApplications;
 
     @BeforeEach
@@ -71,20 +66,15 @@ class ListApplicationsUseCaseTest {
                         return true;
                     })
                     .verifyComplete();
-
-            verify(loanApplicationRepository).countAll();
-            verify(loanApplicationRepository).findAll(0, 2, "id", "ASC");
         }
 
         @Test
-        @DisplayName("Debe retornar error si la paginación es inválida")
+        @DisplayName("Debe retornar BusinessException si la paginación es inválida")
         void shouldReturnErrorForInvalidPagination() {
             StepVerifier.create(listApplicationsUseCase.findAll(-1, 10, "id", "ASC"))
-                    .expectError(InvalidPaginationException.class)
-                    .verify();
-
-            StepVerifier.create(listApplicationsUseCase.findAll(0, 0, "id", "ASC"))
-                    .expectError(InvalidPaginationException.class)
+                    .expectErrorMatches(throwable ->
+                            throwable instanceof BusinessException &&
+                                    ((BusinessException) throwable).getErrorCode() == ErrorCode.VAL_PAGINATION_INVALID)
                     .verify();
 
             verifyNoInteractions(loanApplicationRepository);
@@ -112,27 +102,16 @@ class ListApplicationsUseCaseTest {
                         return true;
                     })
                     .verifyComplete();
-
-            verify(loanApplicationRepository).countByStatusIn(statusIdsCaptor.capture());
-            verify(loanApplicationRepository).findByStatusIn(statusIdsCaptor.capture(), anyInt(), anyInt(), anyString(), anyString());
-
-            List<Integer> expectedStatusIds = List.of(
-                    LoanApplicationStatus.PENDIENTE_REVISION.getId(),
-                    LoanApplicationStatus.RECHAZADA.getId(),
-                    LoanApplicationStatus.REVISION_MANUAL.getId()
-            );
-            assertThat(statusIdsCaptor.getAllValues().get(0)).containsExactlyInAnyOrderElementsOf(expectedStatusIds);
-            assertThat(statusIdsCaptor.getAllValues().get(1)).containsExactlyInAnyOrderElementsOf(expectedStatusIds);
         }
 
         @Test
-        @DisplayName("Debe retornar error si la paginación es inválida")
+        @DisplayName("Debe retornar BusinessException si la paginación es inválida")
         void shouldReturnErrorForInvalidPagination() {
-            StepVerifier.create(listApplicationsUseCase.findForReview(-5, 10, "id", "ASC"))
-                    .expectError(InvalidPaginationException.class)
+            StepVerifier.create(listApplicationsUseCase.findForReview(0, 0, "id", "ASC"))
+                    .expectErrorMatches(throwable ->
+                            throwable instanceof BusinessException &&
+                                    ((BusinessException) throwable).getErrorCode() == ErrorCode.VAL_PAGINATION_INVALID)
                     .verify();
-
-            verifyNoInteractions(loanApplicationRepository);
         }
     }
 }

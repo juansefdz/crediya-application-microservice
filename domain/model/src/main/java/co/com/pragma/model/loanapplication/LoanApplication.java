@@ -15,7 +15,7 @@ public class LoanApplication {
     private String email;
     private String nombreCliente;
     private String usuarioId;
-    private String prestamoId;
+    private Long prestamoId;
     private LoanApplicationStatus status;
 
 }

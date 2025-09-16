@@ -13,7 +13,7 @@ spring:
 
 security:
   jwt:
-    secret: "Vna79qB2rPz6tXhE9fWcK5sJmG3dD8vA"
+    secret: "${JWT_SECRET}"
     expiration-seconds: 86400
 
 management:
@@ -32,5 +32,6 @@ cors:
 adapter:
   sqs:
     region: "${AWS_REGION}"
-    queue-url: "${SQS_QUEUE_URL}"
+    notification-queue-url: "${SQS_NOTIFICATION_QUEUE_URL}"
     validation-queue-url: "${SQS_VALIDATION_QUEUE_URL}"
+

@@ -13,12 +13,10 @@ public interface LoanApplicationRepository {
     Mono<LoanApplication> findById(String id);
     Mono<LoanApplication> save(LoanApplication solicitud);
     Mono<LoanApplication> update(LoanApplication solicitud);
-    Flux<LoanApplication> findByStatusIn(List<Integer> statusIds, int page, int size, String sortBy, String sortOrder);
-    Mono<Long> countByStatusIn(List<Integer> statusIds);
-
+    Flux<LoanApplication> findByStatusIn(List<String> statusNames, int page, int size, String sortBy, String sortOrder);
+    Mono<Long> countByStatusIn(List<String> statusNames);
     Mono<Long> countAll();
     Flux<LoanApplication> findAll(int page, int size, String sortBy, String sortOrder);
-
     Flux<LoanApplication> findByUserIdAndStatus(String userId, LoanApplicationStatus status);
 }
 

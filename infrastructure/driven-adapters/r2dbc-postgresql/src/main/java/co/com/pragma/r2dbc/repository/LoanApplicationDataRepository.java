@@ -11,14 +11,14 @@ import java.util.List;
 
 public interface LoanApplicationDataRepository extends ReactiveCrudRepository<LoanApplicationData, String> {
 
-    Mono<Long> countByStatusIn(List<Integer> statusIds);
+    Mono<Long> countByStatusIn(List<String> status);
 
-    Flux<LoanApplicationData> findByStatusIn(List<Integer> statusIds, Pageable pageable);
+    Flux<LoanApplicationData> findByStatusIn(List<String> status, Pageable pageable);
 
     Mono<Long> count();
     Flux<LoanApplicationData> findAllBy(Pageable pageable);
 
-    Flux<LoanApplicationData> findByUserIdAndStatus(String usuarioId, String status);
+    Flux<LoanApplicationData> findByUsuarioIdAndStatus(String usuarioId, String status);
 
 
 }
